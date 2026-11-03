@@ -119,9 +119,11 @@ const ICONS = {
   doc: `<svg class="fi" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#7fb0ff" stroke-width="1.8" stroke-linejoin="round"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H10a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H4zM20 5.5c0-.8-.7-1.5-1.5-1.5H14a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h6z"/></svg>`,
   preview: `<svg class="fi" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#5fd39a" stroke-width="1.8"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>`,
   welcome: `<svg class="fi" viewBox="0 0 24 24" aria-hidden="true"><path fill="#c9d4ff" d="M20.2 14.6A8.6 8.6 0 0 1 9.4 3.8a.6.6 0 0 0-.8-.7A9.6 9.6 0 1 0 20.9 15.4a.6.6 0 0 0-.7-.8Z"/></svg>`,
+  luna: `<svg class="fi" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" fill="#1d2140"/><path fill="#c9d4ff" d="M15.6 15.2A6 6 0 0 1 8.8 7.6a.4.4 0 0 0-.5-.5 6.7 6.7 0 1 0 7.8 8.6.4.4 0 0 0-.5-.5Z"/><rect x="16" y="7" width="2" height="10" rx="1" fill="#4f8cf7"/></svg>`,
 };
 
 const BY_EXT = {
+  luna: 'luna', lu: 'luna',
   ts: 'ts', mts: 'ts', cts: 'ts', 'd.ts': 'ts', js: 'js', mjs: 'js', cjs: 'js', jsx: 'react', tsx: 'react',
   json: 'json', jsonc: 'json', webmanifest: 'json', html: 'html', htm: 'html', css: 'css', scss: 'scss', sass: 'scss', less: 'css',
   md: 'md', markdown: 'md', mdx: 'md', py: 'py', pyw: 'py', java: 'java', kt: 'kt', kts: 'kt', yml: 'yaml', yaml: 'yaml',

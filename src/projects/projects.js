@@ -3,7 +3,7 @@ import { db, kv } from '../core/db.js';
 import { app, COLORS } from '../core/store.js';
 import { uid, basename, dirname, normalizePath, isBinaryPath, debounce } from '../core/util.js';
 import { compileGitignore } from './gitignore.js';
-import { TEMPLATES } from './templates.js';
+import { TEMPLATES, DEMO_VERSION } from './templates.js';
 
 export const state = {
   list: [], // Projekt-Metadaten
@@ -20,9 +20,23 @@ const INDEX_LIMIT = 1024 * 1024; // > 1 MB wird nicht indiziert
 // ---------- Laden & Speichern ----------
 export async function loadProjects() {
   state.list = (await db.all('projects')).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-  if (!state.list.length && !(await kv.get('demoCreated'))) {
-    await createProject({ name: 'Luna Demo', template: 'demo', color: '#3e63dd' });
-    kv.set('demoCreated', true);
+  const version = (await kv.get('demoVersion')) || ((await kv.get('demoCreated')) ? 1 : 0);
+  if (version < DEMO_VERSION) {
+    // Altes, unverändertes Demo-Projekt (noch mit JavaScript usw.) durch das Luna-Demo ersetzen
+    const old = state.list.find((p) => p.name === 'Luna Demo' && p.source === 'local' && !p.lunaDemo);
+    if (old) {
+      const files = await getFiles(old).catch(() => null);
+      const untouched = files && [...files.values()].every((r) => r.placeholder || r.baseline === r.content);
+      if (untouched) await removeProject(old); else { old.name = 'Altes Demo'; await saveProject(old); }
+    }
+    if (version === 0 || !state.list.some((p) => p.lunaDemo)) {
+      const p = await createProject({ name: 'Luna Demo', template: 'demo', color: '#3e63dd', extra: { lunaDemo: true } });
+      state.list.splice(state.list.indexOf(p), 1);
+      state.list.unshift(p);
+      state.list.forEach((x, i) => { x.order = i; saveProject(x); });
+    }
+    kv.set('demoVersion', DEMO_VERSION);
+    kv.set('openTabs', []);
   }
   return state.list;
 }

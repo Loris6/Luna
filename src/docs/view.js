@@ -3,10 +3,11 @@ import { highlightCode, classHighlighter } from '../../vendor/core.js';
 import { h, frag } from '../core/util.js';
 import { icon } from '../core/icons.js';
 import { app } from '../core/store.js';
-import { KIND_LABEL, related, SETS, searchDocs } from './registry.js';
+import { KIND_LABEL, related, SETS, searchDocs, GUIDE } from './registry.js';
 import { kindIcon } from '../editor/completion.js';
 
 async function parserFor(lang) {
+  if (lang === 'luna') { const { lunaLanguage } = await import('../luna/language.js'); return lunaLanguage.parser; }
   if (lang === 'js' || lang === 'ts') { const { js } = await import('../../vendor/lang-web.js'); return js.javascriptLanguage.parser.configure({ dialect: lang === 'ts' ? 'ts' : '' }); }
   if (lang === 'html') { const { html } = await import('../../vendor/lang-web.js'); return html.htmlLanguage.parser; }
   if (lang === 'css') { const { css } = await import('../../vendor/lang-web.js'); return css.cssLanguage.parser; }
@@ -49,12 +50,35 @@ export function renderDocPage(e) {
     h('p', { class: 'doc-desc' }, e.desc),
     h('h2', {}, e.kind === 'snippet' ? 'Einfügen' : 'Syntax'),
     codeBlock(e.kind === 'snippet' ? cleanSnippet(e.sig) : e.sig, e.lang),
+    e.example ? [h('h2', {}, 'Beispiel'), codeBlock(e.example, e.lang)] : null,
     h('div', { class: 'doc-actions' },
-      h('a', { class: 'btn primary', href: e.url, target: '_blank', rel: 'noopener' }, frag(icon.external), `Vollständige Referenz (${e.refName})`),
+      e.url.startsWith('luna:')
+        ? h('button', { class: 'btn primary', onclick: () => app.emit('open-guide', e.url.split(':')[2]) }, frag(icon.book), `Im ${e.refName} lesen`)
+        : h('a', { class: 'btn primary', href: e.url, target: '_blank', rel: 'noopener' }, frag(icon.external), `Vollständige Referenz (${e.refName})`),
       h('button', { class: 'btn', onclick: () => app.emit('insert-text', e.kind === 'snippet' ? cleanSnippet(e.sig) : e.label) }, frag(icon.plus), 'In Editor einfügen')),
     rel.length ? [h('h2', {}, 'Verwandt'), h('div', { class: 'doc-related' }, rel.map((r) => h('button', { class: 'doc-rel', onclick: () => app.emit('open-doc', r.id) }, kindIcon(r.kind), h('span', { class: 'name' }, r.label), h('span', { class: 'desc' }, r.desc))))] : null,
-    h('p', { class: 'doc-note' }, 'Kurzreferenz von Luna. Die ausführliche Dokumentation findest du über den Link oben.'),
+    h('p', { class: 'doc-note' }, e.lang === 'luna' ? 'Kurzreferenz – mehr Beispiele im Luna-Handbuch.' : 'Kurzreferenz von Luna. Die ausführliche Dokumentation findest du über den Link oben.'),
   );
+}
+
+/** Luna-Handbuch als Seite */
+export function renderGuide(el) {
+  el.replaceChildren(h('article', { class: 'doc-page guide' },
+    h('nav', { class: 'doc-crumbs' }, h('span', {}, 'Dokumentation'), h('span', {}, '/'), h('span', {}, 'Luna-Handbuch')),
+    h('header', { class: 'doc-head' }, h('img', { src: 'icons/icon.svg', width: 40, height: 40, alt: '' }), h('div', {}, h('h1', {}, 'Luna-Handbuch'), h('div', { class: 'doc-meta' }, h('span', { class: 'pill lang' }, 'Luna'), h('span', { class: 'pill' }, 'wie Luau – für alle')))),
+    h('nav', { class: 'guide-toc' }, GUIDE.map((g) => h('a', { href: '#', onclick: (ev) => { ev.preventDefault(); scrollGuide(el, g.id); } }, g.title))),
+    GUIDE.map((g) => h('section', { class: 'guide-sec', dataset: { id: g.id } },
+      h('h2', {}, g.title),
+      h('p', { class: 'doc-desc' }, g.text),
+      g.code ? codeBlock(g.code, 'luna') : null,
+      g.code ? h('button', { class: 'btn sm', onclick: () => app.emit('try-luna', g.code) }, frag(icon.play), 'Ausprobieren') : null)),
+  ));
+}
+export function scrollGuide(el, id) {
+  const sec = el.querySelector(`.guide-sec[data-id="${id}"]`);
+  if (!sec) return;
+  sec.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  sec.classList.remove('flash'); void sec.offsetWidth; sec.classList.add('flash');
 }
 
 /** Seitenleisten-Panel „Docs“ */
@@ -74,8 +98,12 @@ export function renderDocsPanel(container, { lang = '' } = {}) {
       h('span', { class: 'lang' }, SETS[e.lang].name))));
     if (!results.length) list.append(h('p', { class: 'muted pad' }, 'Nichts gefunden.'));
   };
-  input.addEventListener('input', renderList);
-  container.replaceChildren(h('div', { class: 'docs-panel' }, h('div', { class: 'docs-search' }, frag(icon.search), input), chips, list));
+  input.addEventListener('input', () => { if (guide) guide.hidden = !!input.value.trim(); renderList(); });
+  const guide = SETS.luna ? h('div', { class: 'docs-guide' },
+    h('button', { class: 'docs-item guide-item', onclick: () => app.emit('open-guide', 'start') }, frag(icon.book), h('span', { class: 'name' }, 'Luna-Handbuch'), h('span', { class: 'lang' }, 'Einstieg')),
+    GUIDE.slice(1).map((g) => h('button', { class: 'docs-item sub', onclick: () => app.emit('open-guide', g.id) }, h('span', { class: 'name' }, g.title)))) : null;
+  if (Object.keys(SETS).length < 2) chips.hidden = true;
+  container.replaceChildren(h('div', { class: 'docs-panel' }, h('div', { class: 'docs-search' }, frag(icon.search), input), chips, guide || '', list));
   renderChips(); renderList();
   return { focus: () => input.focus(), setLang: (l) => { current = l; renderChips(); renderList(); } };
 }

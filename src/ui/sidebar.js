@@ -335,7 +335,7 @@ export function fileMenu(p, path, anchor, isDir = false) {
 }
 
 export async function newFile(p, folder) {
-  const name = await prompt('Neue Datei', { placeholder: 'z. B. src/app.js', value: folder ? folder + '/' : '', label: `In „${p.name}“ – Unterordner mit / angeben` });
+  const name = await prompt('Neue Datei', { placeholder: 'z. B. spiel.luna', value: folder ? folder + '/' : '', label: `In „${p.name}“ – Unterordner mit / angeben` });
   if (!name) return;
   try {
     await createFile(p, name.replace(/^\/+/, ''));

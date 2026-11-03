@@ -6,6 +6,11 @@ import { forEachDiagnostic } from '../../vendor/core.js';
 import { getProject, getFiles, readFile } from '../projects/projects.js';
 import { allTabs, activeTab, openFile } from '../editor/editor.js';
 import { toast } from './dialog.js';
+import { ENABLED_LANGUAGES } from '../config.js';
+import { isLunaPath } from '../luna/project.js';
+
+let lunaRt = null;
+let lunaStatus = '';
 
 let bottom, right, bottomTab = 'problems', consoleLines = [], preview = null, runner;
 const els = {};
@@ -18,15 +23,21 @@ export function initPanels(bottomEl, rightEl) {
   bottom.append(h('div', { class: 'panel-head' }, els.btabs, els.bactions), els.bbody, h('div', { class: 'panel-resizer h' }));
   els.rtitle = h('span', { class: 'panel-title' }, 'Vorschau');
   els.rbody = h('div', { class: 'panel-body preview-body' });
-  right.append(h('div', { class: 'panel-head' }, frag(icon.eye), els.rtitle, h('span', { class: 'grow' }),
-    h('button', { class: 'icon-btn sm', title: 'Neu laden', onclick: () => refreshPreview(true) }, frag(icon.refresh)),
-    h('button', { class: 'icon-btn sm', title: 'In neuem Fenster öffnen', onclick: openPreviewWindow }, frag(icon.external)),
+  els.rstatus = h('span', { class: 'run-status' });
+  els.stop = h('button', { class: 'icon-btn sm stop-btn', title: 'Stoppen', hidden: true, onclick: stopLuna }, h('span', { class: 'stop-sq' }));
+  els.ext = h('button', { class: 'icon-btn sm', title: 'In neuem Fenster öffnen', onclick: openPreviewWindow }, frag(icon.external));
+  right.append(h('div', { class: 'panel-head' }, frag(icon.eye), els.rtitle, els.rstatus, h('span', { class: 'grow' }),
+    els.stop,
+    h('button', { class: 'icon-btn sm', title: 'Neu starten', onclick: () => (lunaRt ? run() : refreshPreview(true)) }, frag(icon.refresh)),
+    els.ext,
     h('button', { class: 'icon-btn sm', title: 'Schließen', onclick: () => app.set('rightOpen', false) }, frag(icon.close))), els.rbody, h('div', { class: 'panel-resizer v' }));
   initResizers();
   renderBottom();
   renderPreviewEmpty();
   app.on('show-problems', () => { bottomTab = 'problems'; app.set('bottomOpen', true); renderBottom(); });
   app.on('run', run);
+  app.on('stop', stopLuna);
+  app.on('try-luna', (code) => runLunaFiles(null, [{ path: 'beispiel.luna', source: code }]));
   app.on('settings', ({ key }) => { if (key === 'bottomOpen' && app.settings.bottomOpen) renderBottom(); });
   app.on('file-changed', debounce(({ project }) => { if (preview && preview.projectId === project.id && app.settings.rightOpen) refreshPreview(); }, 700));
   setInterval(() => { if (app.settings.bottomOpen && bottomTab === 'problems') renderProblems(); }, 1500);
@@ -46,6 +57,7 @@ function renderBottom() {
     h('button', { class: 'ptab' + (bottomTab === 'console' ? ' on' : ''), onclick: () => { bottomTab = 'console'; renderBottom(); } }, 'Konsole', consoleLines.some((l) => l.level === 'error') ? h('span', { class: 'count err' }, '!') : null),
   );
   setChildren(els.bactions,
+    bottomTab === 'console' && lunaRt && !lunaRt.done ? h('button', { class: 'btn sm stop-inline', onclick: stopLuna }, h('span', { class: 'stop-sq' }), 'Stopp') : null,
     bottomTab === 'console' ? h('button', { class: 'icon-btn sm', title: 'Konsole leeren', onclick: () => { consoleLines = []; renderBottom(); } }, frag(icon.trash)) : null,
     h('button', { class: 'icon-btn sm', title: 'Schließen', onclick: () => app.set('bottomOpen', false) }, frag(icon.close)),
   );
@@ -80,13 +92,14 @@ function renderProblems() {
 
 function renderConsole() {
   els.bbody.replaceChildren(consoleLines.length
-    ? h('div', { class: 'console' }, consoleLines.map((l) => h('div', { class: 'cl ' + l.level }, h('span', { class: 'ts' }, l.time), h('pre', {}, l.text))))
+    ? h('div', { class: 'console' }, consoleLines.map((l) => h('div', { class: 'cl ' + l.level }, h('span', { class: 'ts' }, l.time), h('pre', {}, l.text),
+      l.loc?.file ? h('button', { class: 'cl-loc', title: 'Zur Stelle springen', onclick: () => { const p = getProject(l.loc.projectId); if (p) openFile(p, l.loc.file, { line: l.loc.line || 1 }); } }, `${l.loc.file.split('/').pop()}${l.loc.line ? ':' + l.loc.line : ''}`) : null)))
     : h('div', { class: 'panel-empty' }, frag(icon.terminal), 'Ausgaben von ▶ Ausführen erscheinen hier.'));
   els.bbody.scrollTop = els.bbody.scrollHeight;
 }
 
-export function log(level, text) {
-  consoleLines.push({ level, text, time: new Date().toLocaleTimeString('de-DE') });
+export function log(level, text, loc) {
+  consoleLines.push({ level, text, loc, time: new Date().toLocaleTimeString('de-DE') });
   if (consoleLines.length > 500) consoleLines.shift();
   if (bottomTab === 'console' && app.settings.bottomOpen) renderConsole(); else renderBottom();
 }
@@ -161,10 +174,19 @@ async function buildPreview(p, path) {
 
 export async function run() {
   const tab = activeTab();
-  if (!tab || tab.kind !== 'file') { toast('Öffne zuerst eine Datei zum Ausführen.'); return; }
+  if (!tab || tab.kind !== 'file') { toast('Öffne zuerst eine .luna-Datei zum Ausführen.'); return; }
   const p = getProject(tab.projectId);
   tab.write?.flush();
+  for (const t of allTabs()) t.write?.flush();
   const lang = tab.langId;
+  if (lang === 'luna' || ENABLED_LANGUAGES.length === 1) {
+    const files = await getFiles(p);
+    const scripts = [...files.values()].filter((r) => isLunaPath(r.path) && !r.placeholder);
+    if (!scripts.length) { toast('Ausführen gibt es erstmal nur für Luna – lege eine Datei mit der Endung .luna an.'); return; }
+    const sources = [];
+    for (const r of scripts) sources.push({ path: r.path, source: r.content ?? (await readFile(p, r.path)) ?? '' });
+    return runLunaFiles(p, sources);
+  }
   if (lang === 'javascript') {
     // Wird das Skript von einer HTML-Seite eingebunden? Dann diese Seite als Vorschau starten.
     const host = await findHostHtml(p, tab.path);
@@ -176,6 +198,45 @@ export async function run() {
   const index = files.has('index.html') ? 'index.html' : [...files.keys()].find((k) => /(^|\/)index\.html$/.test(k));
   if (index && ['css', 'typescript', 'json'].includes(lang)) return showPreview(p, index);
   toast(`${lang === 'typescript' ? 'TypeScript' : 'Diese Sprache'} kann (noch) nicht direkt im Browser ausgeführt werden.${index ? '' : ' Lege eine index.html an, um eine Vorschau zu sehen.'}`);
+}
+
+// ---------- Luna ausführen ----------
+function setRunStatus(s) {
+  lunaStatus = s;
+  const running = s === 'läuft' || s === 'wartet auf Ereignisse';
+  els.rstatus.textContent = s ? `· ${s}` : '';
+  els.rstatus.className = 'run-status ' + (running ? 'on' : '');
+  els.stop.hidden = !running;
+  document.body.classList.toggle('luna-running', running);
+  if (!running && s) log(s === 'fertig' ? 'info' : s === 'gestoppt' ? 'warn' : 'error', s === 'fertig' ? '■ Programm beendet.' : s === 'gestoppt' ? '■ Gestoppt.' : `■ ${s}`);
+  renderBottom();
+}
+
+export function stopLuna() { lunaRt?.stop(); }
+
+async function runLunaFiles(p, sources) {
+  lunaRt?.stop();
+  lunaStatus = '';
+  const { LunaRuntime } = await import('../luna/runtime.js');
+  preview = null;
+  els.rtitle.textContent = 'Luna';
+  els.ext.hidden = true;
+  const host = h('div', { class: 'luna-stage-host' });
+  els.rbody.classList.add('luna');
+  els.rbody.replaceChildren(h('div', { class: 'panel-empty' }, frag(icon.play), h('div', {}, 'Luna läuft. Buttons & Co. erscheinen hier, sobald ein Script „import Html“ benutzt.')));
+  consoleLines.push({ level: 'info', text: `▶ ${p ? p.name + ': ' : ''}${sources.map((x) => x.path).join(', ')}`, time: new Date().toLocaleTimeString('de-DE') });
+  bottomTab = 'console';
+  app.set('bottomOpen', true);
+  renderBottom();
+  const rt = new LunaRuntime({
+    out: (level, text, loc) => log(level, text, loc && p ? { ...loc, projectId: p.id } : null),
+    stageHost: host,
+    projectId: p?.id || 'beispiel',
+    onStatus: (st) => { if (rt === lunaRt) setRunStatus(st); },
+    onStage: () => { els.rbody.replaceChildren(host); app.set('rightOpen', true); },
+  });
+  lunaRt = rt;
+  await rt.run(sources);
 }
 
 async function findHostHtml(p, path) {
@@ -202,7 +263,10 @@ async function runScript(p, path) {
 }
 
 async function showPreview(p, path) {
+  lunaRt?.stop();
   preview = { projectId: p.id, path };
+  els.rbody.classList.remove('luna');
+  els.ext.hidden = false;
   app.set('rightOpen', true);
   await refreshPreview(true);
 }

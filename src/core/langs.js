@@ -1,5 +1,6 @@
 // Sprachen: Dateiname → Anzeige-Name, Docs-Sprache und CodeMirror-Erweiterung (lazy geladen).
 import { basename, extname } from './util.js';
+import { ENABLED_LANGUAGES } from '../config.js';
 
 const web = () => import('../../vendor/lang-web.js');
 const more = () => import('../../vendor/lang-more.js');
@@ -13,6 +14,7 @@ const stream = (name) => async () => {
 
 // docs: Schlüssel der Vorschlags-/Doku-Datenbank (siehe src/docs)
 export const LANGS = {
+  luna: { name: 'Luna', docs: 'luna', load: async () => { const L = await import('../luna/language.js'); return [L.luna(), L.lunaLanguage.data.of({ lunaLang: 'luna' })]; } },
   javascript: { name: 'JavaScript', docs: 'js', load: async () => { const { js } = await web(); return withTag(js.javascript(), js.javascriptLanguage, 'js'); } },
   jsx: { name: 'JavaScript JSX', docs: 'js', load: async () => { const { js } = await web(); return withTag(js.javascript({ jsx: true }), js.javascriptLanguage, 'js'); } },
   typescript: { name: 'TypeScript', docs: 'ts', load: async () => { const { js } = await web(); return withTag(js.javascript({ typescript: true }), js.javascriptLanguage, 'js'); } },
@@ -54,6 +56,7 @@ function tag(language, id) { return language.data.of({ lunaLang: id }); }
 function withTag(ext, language, id) { return [ext, tag(language, id)]; }
 
 const EXT = {
+  luna: 'luna', lu: 'luna',
   js: 'javascript', mjs: 'javascript', cjs: 'javascript', jsx: 'jsx', ts: 'typescript', mts: 'typescript', cts: 'typescript', tsx: 'tsx',
   html: 'html', htm: 'html', css: 'css', scss: 'scss', less: 'css', json: 'json', jsonc: 'json', webmanifest: 'json', map: 'json',
   md: 'markdown', markdown: 'markdown', mdx: 'markdown', xml: 'xml', svg: 'svg', plist: 'xml', yml: 'yaml', yaml: 'yaml',
@@ -63,7 +66,13 @@ const EXT = {
   txt: 'text', log: 'text',
 };
 
+/** Sprache einer Datei – Sprachen, die (noch) nicht eingeschaltet sind, werden als einfacher Text behandelt. */
 export function langIdFor(path) {
+  const id = rawLangId(path);
+  return ENABLED_LANGUAGES.includes(LANGS[id]?.docs) ? id : 'text';
+}
+
+function rawLangId(path) {
   const name = basename(path).toLowerCase();
   if (name === 'dockerfile' || name.endsWith('.dockerfile') || name.startsWith('dockerfile.')) return 'dockerfile';
   if (name === 'makefile') return 'shell';

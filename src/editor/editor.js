@@ -14,6 +14,8 @@ import { langIdFor, langInfo, loadLanguage } from '../core/langs.js';
 import { lunaTheme, editorHighlighting, indentGuides, gutterScrollPadding } from './theme.js';
 import { lunaCompletion, fileLangFacet } from './completion.js';
 import { lunaLinter, diagnosticBadges, symbolPath, diagnosticCount } from './diagnostics.js';
+import { fileCtxFacet, isLunaPath } from '../luna/project.js';
+import { forceLinting } from '../../vendor/core.js';
 import { getProject, readFile, writeFile, getFiles, getRec } from '../projects/projects.js';
 import { getSession } from '../collab/session.js';
 import { getEntry } from '../docs/registry.js';
@@ -50,6 +52,7 @@ const foldMarker = (open) => frag(open ? icon.chevronDown : icon.chevronRight);
 function baseExtensions(tab) {
   return [
     fileLangFacet.of(tab.langId),
+    fileCtxFacet.of({ projectId: tab.projectId, path: tab.path }),
     lineNumbers(),
     highlightActiveLineGutter(),
     highlightSpecialChars(),
@@ -75,6 +78,7 @@ function baseExtensions(tab) {
     comp.lint.of(lintExt()),
     keymap.of([
       { key: 'Tab', run: acceptCompletion },
+      { key: 'Mod-Enter', preventDefault: true, run: () => { app.emit('run'); return true; } },
       ...closeBracketsKeymap, ...defaultKeymap, ...searchKeymap, ...foldKeymap, ...lintKeymap, indentWithTab,
       { key: 'Mod-s', preventDefault: true, run: () => { app.emit('save-request'); return true; } },
     ]),
@@ -436,7 +440,12 @@ function applyExternal(view, content) {
   view.dispatch({ changes: { from: a, to: old.length - b, insert: content.slice(a, content.length - b) }, annotations: [External.of(true)] });
 }
 
+const relintLuna = debounce((projectId, path) => {
+  for (const t of allTabs()) if (t.view && t.projectId === projectId && t.path !== path && isLunaPath(t.path)) forceLinting(t.view);
+}, 600);
+
 app.on('file-changed', ({ project, path, origin }) => {
+  if (isLunaPath(path)) relintLuna(project.id, path);
   for (const t of allTabs()) {
     if (t.kind !== 'file' || t.projectId !== project.id || t.path !== path || !t.view || t.collab) continue;
     if (origin === 'view-' + t.id) continue;
