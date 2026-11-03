@@ -7,8 +7,9 @@ import './projects/github.js';
 import './projects/folder.js';
 import { resumeSessions, joinSession } from './collab/session.js';
 import {
-  initEditor, openFile, openDoc, openWelcome, restoreTabs, toggleSplit, navBack, navForward, activeTab, closeTab, insertAtCursor, panes,
+  initEditor, openFile, openDoc, openWelcome, restoreTabs, toggleSplit, navBack, navForward, activeTab, closeTab, insertAtCursor, panes, openCustom,
 } from './editor/editor.js';
+import { renderGuide, scrollGuide } from './docs/view.js';
 import { initSidebar, showPanel, fileMenu, renameItem } from './ui/sidebar.js';
 import { initTopbar } from './ui/topbar.js';
 import { initPanels } from './ui/panels.js';
@@ -43,6 +44,11 @@ async function boot() {
 
   app.on('render-welcome', (el) => renderWelcome(el));
   app.on('show-welcome', () => openWelcome());
+  app.on('open-guide', (section = 'start') => {
+    const tab = openCustom('luna-guide', 'Luna-Handbuch', (el) => renderGuide(el), { iconKey: 'doc' });
+    requestAnimationFrame(() => scrollGuide(tab.el, section));
+    if (isNarrow()) app.set('sidebarOpen', false);
+  });
   app.on('open-doc', (id) => { openDoc(id); if (isNarrow()) app.set('sidebarOpen', false); });
   app.on('show-docs', (opts = {}) => { app.set('sidebarOpen', true); showPanel('docs', opts); });
   app.on('show-search', () => { app.set('sidebarOpen', true); showPanel('search', { focus: true }); });
@@ -79,8 +85,8 @@ async function boot() {
   if (!restored) {
     const demo = P.list.find((p) => p.name === 'Luna Demo') || P.list[0];
     if (demo && !isNarrow()) {
-      await openFile(demo, 'src/app.js', { focus: false });
-      if (innerWidth > 1100) { toggleSplit('column'); await openFile(demo, 'src/rpc-node.ts', { pane: panes[1], focus: false }); }
+      await openFile(demo, 'main.luna', { focus: false });
+      if (innerWidth > 1100 && innerHeight > 700) { toggleSplit('column'); await openFile(demo, 'helfer.luna', { pane: panes[1], focus: false }); }
     } else openWelcome();
   }
   if (isNarrow() && !restored) app.set('sidebarOpen', false);
@@ -130,6 +136,7 @@ async function handleHash() {
 
 function initShortcuts() {
   addEventListener('keydown', (e) => {
+    if (e.defaultPrevented) return; // schon vom Editor erledigt
     const mod = isMac ? e.metaKey : e.ctrlKey;
     const k = e.key.toLowerCase();
     if (mod && !e.shiftKey && k === 'p') { e.preventDefault(); quickOpen(); }
@@ -139,6 +146,7 @@ function initShortcuts() {
     else if (mod && !e.shiftKey && k === 'j') { e.preventDefault(); app.set('bottomOpen', !app.settings.bottomOpen); }
     else if (mod && e.key === '\\') { e.preventDefault(); toggleSplit(); }
     else if (mod && e.key === 'Enter') { e.preventDefault(); app.emit('run'); }
+    else if (e.shiftKey && e.key === 'F5') { e.preventDefault(); app.emit('stop'); }
     else if (mod && !e.shiftKey && k === 'g') { e.preventDefault(); gotoLineDialog(); }
     else if (mod && e.key === ',') { e.preventDefault(); settingsDialog(); }
     else if (mod && k === 's') { e.preventDefault(); app.emit('save-request'); }

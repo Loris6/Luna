@@ -4,11 +4,18 @@ import {
 } from '../../vendor/core.js';
 import { langInfo } from '../core/langs.js';
 import { fileLangFacet } from './completion.js';
+import { analyze, lunaSymbolPath } from '../luna/analysis.js';
+import { otherScripts } from '../luna/project.js';
 
 function syntaxDiagnostics(view) {
   const lang = view.state.facet(fileLangFacet);
   const out = [];
   const doc = view.state.doc;
+  if (lang === 'luna') {
+    try { return analyze(doc.toString(), { others: otherScripts(view.state) }); }
+    catch (e) { console.warn('Luna-Prüfung fehlgeschlagen', e); return []; }
+  }
+  if (lang === 'text') return out;
   if (lang === 'json') {
     const text = doc.toString();
     if (text.trim()) {
@@ -42,7 +49,7 @@ function syntaxDiagnostics(view) {
   return out;
 }
 
-export const lunaLinter = linter(syntaxDiagnostics, { delay: 700 });
+export const lunaLinter = linter(syntaxDiagnostics, { delay: 500 });
 
 // ---------- Zähler-Badge am Zeilenende ----------
 class BadgeWidget extends WidgetType {
@@ -81,6 +88,7 @@ const CONTAINER = /^(FunctionDeclaration|ClassDeclaration|MethodDeclaration|Vari
 const NAME = /^(VariableDefinition|PropertyDefinition|Definition|VariableName|TypeDefinition|PropertyName|Identifier|TagSelector|ClassSelector|IdSelector)$/;
 
 export function symbolPath(state, pos) {
+  if (state.facet(fileLangFacet) === 'luna') return lunaSymbolPath(state.doc.toString(), pos);
   const names = [];
   let node = syntaxTree(state).resolveInner(pos, -1);
   for (let n = node; n; n = n.parent) {

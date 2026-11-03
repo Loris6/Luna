@@ -5,14 +5,18 @@ import html from './data/html.js';
 import css from './data/css.js';
 import py from './data/py.js';
 import java from './data/java.js';
+import luna, { GUIDE } from './data/luna.js';
+import { ENABLED_LANGUAGES } from '../config.js';
 
-export const SETS = { js, ts, html, css, py, java };
+const ALL_SETS = { luna, js, ts, html, css, py, java };
+export const SETS = Object.fromEntries(Object.entries(ALL_SETS).filter(([id]) => ENABLED_LANGUAGES.includes(id) || ENABLED_LANGUAGES.some((l) => ALL_SETS[l]?.extends === id)));
+export { GUIDE };
 
 export const KIND_LABEL = {
   class: 'Klasse', interface: 'Interface', function: 'Funktion', method: 'Methode', property: 'Eigenschaft',
   keyword: 'Schlüsselwort', namespace: 'Namensraum', exception: 'Ausnahme', snippet: 'Schnipsel', type: 'Typ',
   variable: 'Variable', constant: 'Konstante', tag: 'HTML-Element', attribute: 'Attribut', module: 'Modul',
-  enum: 'Enum', text: 'Wort', local: 'Lokal',
+  enum: 'Enum', text: 'Wort', local: 'Lokal', event: 'Ereignis',
 };
 
 const all = [];
@@ -21,9 +25,9 @@ const byLang = new Map();
 
 for (const set of Object.values(SETS)) {
   const list = [];
-  for (const [kind, owner, label, sig, desc, ref] of set.entries) {
-    const id = `${set.id}:${kind === 'attribute' ? '@' : ''}${owner ? owner + '.' : ''}${label}`;
-    const e = { id, lang: set.id, langName: set.name, kind, owner, label, sig, desc, ref };
+  for (const [kind, owner, label, sig, desc, ref, example] of set.entries) {
+    const id = `${set.id}:${kind === 'attribute' ? '@' : ''}${kind === 'snippet' ? '#' : ''}${owner ? owner + '.' : ''}${label}`;
+    const e = { id, lang: set.id, langName: set.name, kind, owner, label, sig, desc, ref, example };
     list.push(e);
   }
   for (const e of list) {

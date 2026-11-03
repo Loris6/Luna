@@ -24,7 +24,7 @@ export function addRepositoryMenu(anchor) {
 
 export function newProjectDialog() {
   const name = h('input', { class: 'input', placeholder: 'Projektname', value: 'Neues Projekt', autofocus: true });
-  let tpl = 'web';
+  let tpl = 'ui';
   const grid = h('div', { class: 'tpl-grid' });
   const render = () => grid.replaceChildren(...Object.entries(TEMPLATES).filter(([k]) => k !== 'demo').map(([k, t]) =>
     h('button', { type: 'button', class: 'tpl' + (tpl === k ? ' on' : ''), onclick: () => { tpl = k; render(); } }, h('strong', {}, t.name), h('span', { class: 'muted' }, `${Object.keys(t.files).length} Datei(en)`))));
@@ -36,7 +36,7 @@ export function newProjectDialog() {
       const n = name.value.trim();
       if (!n) return false;
       const p = await createProject({ name: n, template: tpl });
-      const first = Object.keys(TEMPLATES[tpl].files).find((f) => /\.(html|js|ts|py|java)$/.test(f)) || Object.keys(TEMPLATES[tpl].files)[0];
+      const first = Object.keys(TEMPLATES[tpl].files).find((f) => /\.luna$/.test(f)) || Object.keys(TEMPLATES[tpl].files)[0];
       if (first) openFile(p, first);
       return true;
     } }],
@@ -196,7 +196,9 @@ export function commands() {
     { label: 'Von GitHub importieren …', ic: icon.github, run: githubDialog },
     { label: 'Live-Session beitreten …', ic: icon.users, run: joinDialog },
     { label: 'Live-Session starten/teilen', ic: icon.broadcast, run: () => app.emit('show-live') },
-    { label: 'Ausführen / Vorschau', ic: icon.play, shortcut: `${modKey}↵`, run: () => app.emit('run') },
+    { label: 'Luna ausführen', ic: icon.play, shortcut: `${modKey}↵`, run: () => app.emit('run') },
+    { label: 'Luna stoppen', ic: icon.close, shortcut: '⇧F5', run: () => app.emit('stop') },
+    { label: 'Luna-Handbuch', ic: icon.book, run: () => app.emit('open-guide', 'start') },
     { label: 'Ansicht teilen', ic: icon.splitDown, shortcut: `${modKey}\\`, run: () => toggleSplit() },
     { label: 'Geteilt: nebeneinander', ic: icon.split, run: () => toggleSplit('row') },
     { label: 'Geteilt: untereinander', ic: icon.splitDown, run: () => toggleSplit('column') },
