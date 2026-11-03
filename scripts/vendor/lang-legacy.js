@@ -1,0 +1,12 @@
+export { shell } from '@codemirror/legacy-modes/mode/shell';
+export { dockerFile } from '@codemirror/legacy-modes/mode/dockerfile';
+export { lua } from '@codemirror/legacy-modes/mode/lua';
+export { kotlin, csharp, dart, scala, objectiveC } from '@codemirror/legacy-modes/mode/clike';
+export { toml } from '@codemirror/legacy-modes/mode/toml';
+export { go } from '@codemirror/legacy-modes/mode/go';
+export { ruby } from '@codemirror/legacy-modes/mode/ruby';
+export { swift } from '@codemirror/legacy-modes/mode/swift';
+export { powerShell } from '@codemirror/legacy-modes/mode/powershell';
+export { diff } from '@codemirror/legacy-modes/mode/diff';
+export { properties } from '@codemirror/legacy-modes/mode/properties';
+export { nginx } from '@codemirror/legacy-modes/mode/nginx';
