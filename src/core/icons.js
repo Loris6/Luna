@@ -1,0 +1,144 @@
+// UI-Icons (Strich-Stil) und farbige Datei-Icons als SVG-Strings.
+import { basename, extname } from './util.js';
+
+const s = (body, vb = 24) => `<svg class="i" viewBox="0 0 ${vb} ${vb}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+
+export const icon = {
+  home: `<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3.2 2.8 10.4c-.5.4-.2 1.1.4 1.1H5v8.3c0 .6.4 1 1 1h4.2v-5.6h3.6v5.6H18c.6 0 1-.4 1-1v-8.3h1.8c.6 0 .9-.7.4-1.1L12 3.2Z"/></svg>`,
+  chevronRight: s('<path d="m9 6 6 6-6 6"/>'),
+  chevronDown: s('<path d="m6 9 6 6 6-6"/>'),
+  caretDown: `<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 9.5h10l-5 6z"/></svg>`,
+  caretRight: `<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9.5 7v10l6-5z"/></svg>`,
+  arrowLeft: s('<path d="M19 12H5M11 6l-6 6 6 6"/>'),
+  arrowRight: s('<path d="M5 12h14M13 6l6 6-6 6"/>'),
+  clock: `<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="currentColor"/><path d="M12 7v5.2l3 1.8" stroke="var(--bg)" stroke-width="2" stroke-linecap="round" fill="none"/></svg>`,
+  book: `<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.5 3h11A1.5 1.5 0 0 1 19 4.5v13a1 1 0 0 1-1 1H7a1 1 0 0 0 0 2h11.2a.8.8 0 0 1 0 1.5H7a2.5 2.5 0 0 1-2.5-2.5V5A2 2 0 0 1 6.5 3Z"/></svg>`,
+  docs: s('<path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H15l4 4v12.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 19.5z"/><path d="M14.5 3v4.5H19M8.5 12h7M8.5 15.5h7"/>'),
+  search: s('<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>'),
+  sparkSearch: s('<circle cx="10.5" cy="11.5" r="6"/><path d="m19 20-3.9-3.9M18 3v4M16 5h4"/>'),
+  refresh: s('<path d="M20 11a8 8 0 0 0-14.3-4.6L4 8"/><path d="M4 3.5V8h4.5M4 13a8 8 0 0 0 14.3 4.6L20 16"/><path d="M20 20.5V16h-4.5"/>'),
+  branch: s('<circle cx="6.5" cy="5.5" r="2"/><circle cx="6.5" cy="18.5" r="2"/><circle cx="17.5" cy="5.5" r="2"/><path d="M6.5 7.5v9M17.5 7.5v1.5a4 4 0 0 1-4 4h-3a4 4 0 0 0-4 4"/>'),
+  pr: s('<circle cx="6" cy="5.5" r="2"/><circle cx="6" cy="18.5" r="2"/><circle cx="18" cy="18.5" r="2"/><path d="M6 7.5v9M18 16.5V10a3 3 0 0 0-3-3h-4M13 4.5 10.5 7l2.5 2.5"/>'),
+  file: s('<path d="M6.5 3H14l4.5 4.5v12a1.5 1.5 0 0 1-1.5 1.5H6.5A1.5 1.5 0 0 1 5 19.5v-15A1.5 1.5 0 0 1 6.5 3Z"/><path d="M13.5 3v5h5"/>'),
+  fileIgnored: s('<path d="M13 21H6.5A1.5 1.5 0 0 1 5 19.5v-15A1.5 1.5 0 0 1 6.5 3H14l4.5 4.5V11"/><path d="M13.5 3v5h5"/><rect x="14" y="15" width="6" height="5" rx="1"/><path d="M15.5 15v-1.5a1.5 1.5 0 0 1 3 0V15"/>'),
+  fileX: s('<path d="M11 21H6.5A1.5 1.5 0 0 1 5 19.5v-15A1.5 1.5 0 0 1 6.5 3H14l4.5 4.5V11"/><path d="M13.5 3v5h5M15 15l5 5M20 15l-5 5"/>'),
+  trash: `<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9 2.5h6l.8 1.5H20a1 1 0 1 1 0 2H4a1 1 0 0 1 0-2h4.2L9 2.5ZM5.5 7.5h13l-.9 12.1a2 2 0 0 1-2 1.9H8.4a2 2 0 0 1-2-1.9L5.5 7.5Z"/></svg>`,
+  check: s('<path d="m5 12.5 4.5 4.5L19 7.5"/>'),
+  plus: s('<path d="M12 5v14M5 12h14"/>'),
+  more: `<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="12" r="1.7" fill="currentColor"/><circle cx="12" cy="12" r="1.7" fill="currentColor"/><circle cx="18.5" cy="12" r="1.7" fill="currentColor"/></svg>`,
+  close: s('<path d="M6 6l12 12M18 6 6 18"/>'),
+  panelLeft: s('<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M9.5 4.5v15"/>'),
+  panelLeftOn: `<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M6 4.5h3.5v15H6a2.5 2.5 0 0 1-2.5-2.5V7A2.5 2.5 0 0 1 6 4.5Z" fill="currentColor"/></svg>`,
+  panelBottom: s('<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 14.5h17"/>'),
+  panelBottomOn: `<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 14.5h17V17a2.5 2.5 0 0 1-2.5 2.5H6A2.5 2.5 0 0 1 3.5 17z" fill="currentColor"/></svg>`,
+  panelRight: s('<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M14.5 4.5v15"/>'),
+  panelRightOn: `<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M14.5 4.5H18a2.5 2.5 0 0 1 2.5 2.5v10a2.5 2.5 0 0 1-2.5 2.5h-3.5z" fill="currentColor"/></svg>`,
+  grid: `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${[5, 12, 19].flatMap((y) => [5, 12, 19].map((x) => `<circle cx="${x}" cy="${y}" r="1.6" fill="currentColor"/>`)).join('')}</svg>`,
+  broadcast: s('<circle cx="12" cy="12" r="1.8" fill="currentColor"/><path d="M8.2 15.8a5.4 5.4 0 0 1 0-7.6M15.8 8.2a5.4 5.4 0 0 1 0 7.6M5.3 18.7a9.5 9.5 0 0 1 0-13.4M18.7 5.3a9.5 9.5 0 0 1 0 13.4"/>'),
+  play: s('<path d="M7 4.8v14.4a.8.8 0 0 0 1.2.7l11.3-7.2a.8.8 0 0 0 0-1.4L8.2 4.1A.8.8 0 0 0 7 4.8Z"/>'),
+  bell: s('<path d="M6 16.5V11a6 6 0 1 1 12 0v5.5l1.5 2h-15z"/><path d="M10 21h4"/>'),
+  settings: s('<path d="M12 2.8 20 7.4v9.2l-8 4.6-8-4.6V7.4z"/><circle cx="12" cy="12" r="3"/>'),
+  bolt: `<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M13.6 2.2 4.8 13.1c-.4.5 0 1.2.6 1.2h5.4l-1.4 7.3c-.1.7.8 1.1 1.2.5l8.8-10.9c.4-.5 0-1.2-.6-1.2h-5.4l1.4-7.3c.1-.7-.8-1.1-1.2-.5Z"/></svg>`,
+  folder: `<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 6.5A2.5 2.5 0 0 1 5.5 4h3.7c.7 0 1.3.3 1.8.8L12.4 6h6.1A2.5 2.5 0 0 1 21 8.5v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z"/></svg>`,
+  folderOpen: `<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 6.5A2.5 2.5 0 0 1 5.5 4h3.7c.7 0 1.3.3 1.8.8L12.4 6h6.1A2.5 2.5 0 0 1 21 8.5V9H7.6a2.5 2.5 0 0 0-2.4 1.8L3 18.4z"/><path fill="currentColor" d="M7.6 10.5h13.1c.9 0 1.5.9 1.2 1.7l-1.9 6.1a2.5 2.5 0 0 1-2.4 1.7H4.4c-.9 0-1.5-.9-1.2-1.7l2-6.1c.3-1 1.3-1.7 2.4-1.7Z"/></svg>`,
+  keyboard: s('<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6 10h.01M9.5 10h.01M13 10h.01M16.5 10h.01M6 13.5h.01M18 13.5h.01M9 14h6"/>'),
+  copy: s('<rect x="8.5" y="8.5" width="12" height="12" rx="2"/><path d="M15.5 8.5V5.5a2 2 0 0 0-2-2h-8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h3"/>'),
+  download: s('<path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/>'),
+  upload: s('<path d="M12 20V9M7 13.5l5-5 5 5M5 4h14"/>'),
+  edit: s('<path d="M15.5 4.5l4 4L8.5 19.5 4 20l.5-4.5z"/><path d="M13.5 6.5l4 4"/>'),
+  link: s('<path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/>'),
+  users: s('<circle cx="9" cy="8.5" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 5.2a3.5 3.5 0 0 1 0 6.6M18.5 14.3A6.5 6.5 0 0 1 21.5 20"/>'),
+  external: s('<path d="M14 4h6v6M20 4l-9 9M18 14v4.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6H10"/>'),
+  github: `<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.3-3.4-1.3-.4-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.6.3-1.1.6-1.3-2.2-.3-4.6-1.1-4.6-5a3.9 3.9 0 0 1 1-2.7c-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.7 1a9.4 9.4 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .5 1.4.2 2.4.1 2.7a3.9 3.9 0 0 1 1 2.7c0 3.9-2.4 4.7-4.6 5 .4.3.7.9.7 1.8V21c0 .3.2.6.7.5A10 10 0 0 0 12 2Z"/></svg>`,
+  split: s('<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M12 4.5v15"/>'),
+  splitDown: s('<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 12h17"/>'),
+  alert: s('<path d="M12 4 2.8 19.5h18.4z"/><path d="M12 10v4.5M12 17.3v.2"/>'),
+  error: s('<circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.3v.2"/>'),
+  info: s('<circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.7v.2"/>'),
+  terminal: s('<rect x="3" y="4.5" width="18" height="15" rx="2.5"/><path d="m7 9.5 3 2.5-3 2.5M12.5 15h4.5"/>'),
+  eye: s('<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/>'),
+  logout: s('<path d="M9.5 20H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h3.5M15.5 16.5 20 12l-4.5-4.5M20 12H9.5"/>'),
+  menu: s('<path d="M4 7h16M4 12h16M4 17h16"/>'),
+  newFile: s('<path d="M13 21H6.5A1.5 1.5 0 0 1 5 19.5v-15A1.5 1.5 0 0 1 6.5 3H14l4.5 4.5V12"/><path d="M13.5 3v5h5M18 15v6M15 18h6"/>'),
+  newFolder: s('<path d="M11 19.5H5.5A2.5 2.5 0 0 1 3 17V6.5A2.5 2.5 0 0 1 5.5 4h3.7c.7 0 1.3.3 1.8.8L12.4 6h6.1A2.5 2.5 0 0 1 21 8.5V12"/><path d="M18 15v6M15 18h6"/>'),
+  collapse: s('<path d="m7 20 5-5 5 5M7 4l5 5 5-5"/>'),
+  laptop: s('<rect x="4.5" y="5" width="15" height="10.5" rx="1.5"/><path d="M2.5 19h19"/>'),
+  install: s('<rect x="3" y="3.5" width="18" height="13" rx="2.5"/><path d="M12 7v6M9.5 10.5 12 13l2.5-2.5M8 20.5h8"/>'),
+  moon: `<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M20.2 14.6A8.6 8.6 0 0 1 9.4 3.8a.6.6 0 0 0-.8-.7A9.6 9.6 0 1 0 20.9 15.4a.6.6 0 0 0-.7-.8Z"/></svg>`,
+  sync: s('<path d="M4 12a8 8 0 0 1 13.7-5.6L20 8.5"/><path d="M20 4v4.5h-4.5M20 12a8 8 0 0 1-13.7 5.6L4 15.5"/><path d="M4 20v-4.5h4.5"/>'),
+  spinner: `<svg class="i spin" viewBox="0 0 24 24" aria-hidden="true">${Array.from({ length: 8 }, (_, i) => `<path d="M12 2.5v4" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="${(0.25 + i * 0.1).toFixed(2)}" transform="rotate(${i * 45} 12 12)"/>`).join('')}</svg>`,
+  dot: `<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>`,
+  zip: s('<path d="M6.5 3H14l4.5 4.5v12a1.5 1.5 0 0 1-1.5 1.5H6.5A1.5 1.5 0 0 1 5 19.5v-15A1.5 1.5 0 0 1 6.5 3Z"/><path d="M10 3v2M12 5v2M10 7v2M12 9v2M10 13h2v3h-2z"/>'),
+  target: s('<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>'),
+};
+
+// ---------- Datei-Icons ----------
+const badge = (bg, text, fg = '#fff', size = 8.5) => {
+  const pos = text.length > 2 ? 'x="12" y="15.5" text-anchor="middle"' : 'x="19.5" y="19" text-anchor="end"';
+  return `<svg class="fi" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="3.5" fill="${bg}"/><text ${pos} font-family="Inter,system-ui,sans-serif" font-weight="800" font-size="${size}" fill="${fg}">${text}</text></svg>`;
+};
+const glyph = (color, path, fill = true) => `<svg class="fi" viewBox="0 0 24 24" aria-hidden="true"><path d="${path}" ${fill ? `fill="${color}"` : `fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"`}/></svg>`;
+
+const ICONS = {
+  ts: badge('#3178c6', 'TS'),
+  mts: badge('#3178c6', 'TS'),
+  cts: badge('#3178c6', 'TS'),
+  js: badge('#f0db4f', 'JS', '#1d1d1d'),
+  mjs: badge('#f0db4f', 'JS', '#1d1d1d'),
+  cjs: badge('#f0db4f', 'JS', '#1d1d1d'),
+  react: `<svg class="fi" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#5aa9e6" stroke-width="1.5"><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/><circle cx="12" cy="12" r="1.8" fill="#5aa9e6" stroke="none"/></svg>`,
+  json: `<svg class="fi" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#e59408" stroke-width="2.2" stroke-linecap="round"><path d="M8.5 4C6 4 6.5 7 6.5 9S5.5 12 4 12c1.5 0 2.5 1 2.5 3s-.5 5 2 5M15.5 4c2.5 0 2 3 2 5s1 3 2.5 3c-1.5 0-2.5 1-2.5 3s.5 5-2 5"/></svg>`,
+  html: glyph('#e8622c', 'M8 7 3 12l5 5M16 7l5 5-5 5', false),
+  css: glyph('#6b8cff', 'M9 3.5 7 20.5M17 3.5l-2 17M4 9h17M3 15h17', false),
+  scss: glyph('#cd6799', 'M9 3.5 7 20.5M17 3.5l-2 17M4 9h17M3 15h17', false),
+  md: `<svg class="fi" viewBox="0 0 24 24" aria-hidden="true"><rect x="1.5" y="5" width="21" height="14" rx="2.5" fill="none" stroke="#7aa6da" stroke-width="1.8"/><path d="M5 15.5v-7l3 3.5 3-3.5v7M15.5 8.5v6.5M13 12.5l2.5 2.8 2.5-2.8" fill="none" stroke="#7aa6da" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  py: `<svg class="fi" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4a8cd6" d="M11.9 2c-5 0-4.7 2.2-4.7 2.2v2.3h4.8v.7H5.3S2 6.8 2 11.9c0 5 2.9 4.9 2.9 4.9h1.7v-2.4s-.1-2.9 2.8-2.9h4.8s2.8 0 2.8-2.7V4.8S17.4 2 11.9 2ZM9.3 3.5a.9.9 0 1 1 0 1.8.9.9 0 0 1 0-1.8Z"/><path fill="#f5c93e" d="M12.1 22c5 0 4.7-2.2 4.7-2.2v-2.3H12v-.7h6.7S22 17.2 22 12.1c0-5-2.9-4.9-2.9-4.9h-1.7v2.4s.1 2.9-2.8 2.9H9.8S7 12.5 7 15.2v4.5S6.6 22 12.1 22Zm2.6-1.5a.9.9 0 1 1 0-1.8.9.9 0 0 1 0 1.8Z"/></svg>`,
+  java: `<svg class="fi" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#f0743e" stroke-width="1.8" stroke-linecap="round"><path d="M5 14h11v2.5a4.5 4.5 0 0 1-4.5 4.5h-2A4.5 4.5 0 0 1 5 16.5z"/><path d="M16 15h1.5a2 2 0 0 1 0 4H16M9 3c-1 1.5 1 2.5 0 4M12.5 4c-1 1.5 1 2.5 0 4"/></svg>`,
+  kt: `<svg class="fi" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="ktg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#e44857"/><stop offset=".45" stop-color="#c711e1"/><stop offset="1" stop-color="#7f52ff"/></linearGradient></defs><path fill="url(#ktg)" d="M3 3h18L12 12l9 9H3z"/></svg>`,
+  docker: `<svg class="fi" viewBox="0 0 24 24" aria-hidden="true"><path fill="#2496ed" d="M22.5 10.5c-.5-.4-1.7-.5-2.6-.3-.1-.9-.6-1.7-1.5-2.3l-.5-.3-.3.5c-.4.6-.6 1.5-.5 2.3 0 .3.1.8.4 1.2-.3.2-.9.4-1.7.4H1.6l-.1.4c-.1 1.6.1 3.6 1.4 5.2 1.2 1.5 3.1 2.2 5.6 2.2 5.3 0 9.3-2.5 11.1-7.6.7 0 2.3 0 3-1.5l.2-.4-.3-.3ZM4 9.6h2.3v2.1H4zm2.7 0H9v2.1H6.7zm0-2.6H9v2.2H6.7zm2.7 2.6h2.3v2.1H9.4zm0-2.6h2.3v2.2H9.4zm2.7 2.6h2.3v2.1h-2.3zm0-2.6h2.3v2.2h-2.3zm0-2.6h2.3v2.1h-2.3zm2.7 5.2h2.3v2.1h-2.3z"/></svg>`,
+  yaml: `<svg class="fi" viewBox="0 0 24 24" aria-hidden="true"><path fill="#d16bd1" d="M10.3 3h3.4l-.7 12.5h-2zM12 17.3a1.9 1.9 0 1 1 0 3.8 1.9 1.9 0 0 1 0-3.8Z"/></svg>`,
+  git: `<svg class="fi" viewBox="0 0 24 24" aria-hidden="true"><path fill="#7f8ea3" d="M21.6 11 13 2.4a1.4 1.4 0 0 0-2 0L9.2 4.2l2.3 2.3a1.7 1.7 0 0 1 2.1 2.1l2.2 2.2a1.7 1.7 0 1 1-1 1l-2.1-2.1v5.4a1.7 1.7 0 1 1-1.4 0V9.6a1.7 1.7 0 0 1-.9-2.2L8.1 5.1 2.4 11a1.4 1.4 0 0 0 0 2l8.6 8.6a1.4 1.4 0 0 0 2 0l8.6-8.6a1.4 1.4 0 0 0 0-2Z"/></svg>`,
+  license: `<svg class="fi" viewBox="0 0 24 24" aria-hidden="true"><path fill="#2fb3d9" d="M6.5 2.5h11A1.5 1.5 0 0 1 19 4v14a1 1 0 0 1-1 1H7.2a.9.9 0 0 0 0 1.8H18.3a.6.6 0 0 1 0 1.2H7A2.5 2.5 0 0 1 4.5 19.5V4.5a2 2 0 0 1 2-2Z"/><path d="M8.5 6.5h7M8.5 9.5h5" stroke="#0b0b0f" stroke-width="1.6" stroke-linecap="round"/></svg>`,
+  image: `<svg class="fi" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#b18cf5" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="9.5" r="1.8" fill="#b18cf5" stroke="none"/><path d="m3.5 18 5.5-5.5 4 4 2.5-2.5 5 5"/></svg>`,
+  svg: `<svg class="fi" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#ffb13b" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 3v6M12 15v6M3 12h6M15 12h6"/></svg>`,
+  sh: glyph('#89e051', 'm5 7 5 5-5 5M12 17h7', false),
+  lua: `<svg class="fi" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="13" r="8.5" fill="#2c2d9e"/><circle cx="14" cy="10" r="2.8" fill="#fff"/><circle cx="20" cy="4" r="2.5" fill="#2c2d9e"/></svg>`,
+  rs: glyph('#dea584', 'M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17Zm-3 5h4.5a2 2 0 0 1 0 4H9m0-4v7m4.5-3 2 3', false),
+  go: badge('#00add8', 'GO', '#fff', 7.5),
+  c: badge('#5c6bc0', 'C', '#fff', 10),
+  cpp: badge('#5c6bc0', 'C++', '#fff', 7),
+  h: badge('#7e57c2', 'H', '#fff', 10),
+  php: badge('#777bb3', 'PHP', '#fff', 6.5),
+  sql: glyph('#e0a347', 'M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3Zm0 0v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3', false),
+  txt: glyph('#9aa0aa', 'M6 6h12M6 10h12M6 14h12M6 18h7', false),
+  env: glyph('#e8c34a', 'M7 14a4 4 0 1 1 3.9-5H21v3h-2v2.5h-3V12h-5.1A4 4 0 0 1 7 14Z', false),
+  lock: glyph('#9aa0aa', 'M6.5 11h11v9.5h-11zM8.5 11V8a3.5 3.5 0 0 1 7 0v3', false),
+  xml: glyph('#f1662a', 'M8 7 3 12l5 5M16 7l5 5-5 5M13.5 5l-3 14', false),
+  toml: glyph('#9c4221', 'M5 4h14M12 4v16M5 20h3M16 20h3', false),
+  default: `<svg class="fi" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#8b8f99" stroke-width="1.8" stroke-linejoin="round"><path d="M6.5 3H14l4.5 4.5v12a1.5 1.5 0 0 1-1.5 1.5H6.5A1.5 1.5 0 0 1 5 19.5v-15A1.5 1.5 0 0 1 6.5 3Z"/><path d="M13.5 3v5h5"/></svg>`,
+  doc: `<svg class="fi" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#7fb0ff" stroke-width="1.8" stroke-linejoin="round"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H10a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H4zM20 5.5c0-.8-.7-1.5-1.5-1.5H14a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h6z"/></svg>`,
+  preview: `<svg class="fi" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#5fd39a" stroke-width="1.8"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>`,
+  welcome: `<svg class="fi" viewBox="0 0 24 24" aria-hidden="true"><path fill="#c9d4ff" d="M20.2 14.6A8.6 8.6 0 0 1 9.4 3.8a.6.6 0 0 0-.8-.7A9.6 9.6 0 1 0 20.9 15.4a.6.6 0 0 0-.7-.8Z"/></svg>`,
+};
+
+const BY_EXT = {
+  ts: 'ts', mts: 'ts', cts: 'ts', 'd.ts': 'ts', js: 'js', mjs: 'js', cjs: 'js', jsx: 'react', tsx: 'react',
+  json: 'json', jsonc: 'json', webmanifest: 'json', html: 'html', htm: 'html', css: 'css', scss: 'scss', sass: 'scss', less: 'css',
+  md: 'md', markdown: 'md', mdx: 'md', py: 'py', pyw: 'py', java: 'java', kt: 'kt', kts: 'kt', yml: 'yaml', yaml: 'yaml',
+  png: 'image', jpg: 'image', jpeg: 'image', gif: 'image', webp: 'image', ico: 'image', avif: 'image', bmp: 'image', svg: 'svg',
+  sh: 'sh', bash: 'sh', zsh: 'sh', ps1: 'sh', lua: 'lua', luau: 'lua', rs: 'rs', go: 'go', c: 'c', cc: 'cpp', cpp: 'cpp', cxx: 'cpp', hpp: 'h', h: 'h',
+  php: 'php', sql: 'sql', txt: 'txt', log: 'txt', xml: 'xml', toml: 'toml', lock: 'lock', env: 'env', dockerfile: 'docker',
+};
+
+export function fileIcon(path) {
+  const name = basename(path).toLowerCase();
+  if (name === 'dockerfile' || name.endsWith('.dockerfile') || name.startsWith('dockerfile.')) return ICONS.docker;
+  if (name.startsWith('.git')) return ICONS.git;
+  if (/^(license|licence|copying)(\.|$)/.test(name)) return ICONS.license;
+  if (name.startsWith('.env')) return ICONS.env;
+  if (name === 'package-lock.json' || name === 'yarn.lock' || name === 'pnpm-lock.yaml') return ICONS.lock;
+  const ext = extname(path);
+  return ICONS[BY_EXT[ext]] || ICONS.default;
+}
+
+export const specialIcon = (k) => ICONS[k] || ICONS.default;
