@@ -4,6 +4,7 @@
 import { Y, awarenessProtocol, syncProtocol, encoding, decoding } from '../../vendor/core.js';
 import { db } from '../core/db.js';
 import { app } from '../core/store.js';
+import { auth } from '../core/auth.js';
 import { Emitter, uid, debounce } from '../core/util.js';
 import {
   state as P, getFiles, writeFile, createFile, deletePath, createProject, saveProject, getProject,
@@ -19,7 +20,8 @@ export const sessions = new Map(); // projectId → LiveSession
 export function collabServerUrl() {
   const custom = (app.settings.collabServer || '').trim();
   if (custom) return custom.replace(/^http/, 'ws');
-  const u = new URL('collab', location.href);
+  const base = auth.serverBase();
+  const u = new URL(base ? base.replace(/\/+$/, '') + '/collab' : 'collab', location.href);
   u.protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
   u.search = ''; u.hash = '';
   return u.href;

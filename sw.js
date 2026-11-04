@@ -1,17 +1,24 @@
 // Service Worker: macht Luna offline nutzbar (PWA). Die Liste unten wird von `npm run build` erzeugt.
 // <precache>
-const VERSION = '2a4d9e55cad1';
+const VERSION = 'fd33fdad04a6';
 const PRECACHE = ["./",
   "index.html",
+  "docs.html",
   "manifest.webmanifest",
+  "luna.config.json",
   "src/collab/session.js",
   "src/config.js",
+  "src/core/auth.js",
   "src/core/db.js",
   "src/core/icons.js",
   "src/core/keyboard.js",
   "src/core/langs.js",
+  "src/core/platform.js",
+  "src/core/secure.js",
   "src/core/store.js",
+  "src/core/sync.js",
   "src/core/util.js",
+  "src/core/webhooks.js",
   "src/docs/data/css.js",
   "src/docs/data/html.js",
   "src/docs/data/java.js",
@@ -21,6 +28,7 @@ const PRECACHE = ["./",
   "src/docs/data/ts.js",
   "src/docs/registry.js",
   "src/docs/view.js",
+  "src/docs-page.js",
   "src/editor/completion.js",
   "src/editor/diagnostics.js",
   "src/editor/editor.js",
@@ -38,12 +46,19 @@ const PRECACHE = ["./",
   "src/projects/templates.js",
   "src/ui/actions.js",
   "src/ui/dialog.js",
+  "src/ui/home.js",
+  "src/ui/login.js",
   "src/ui/menu.js",
   "src/ui/panels.js",
+  "src/ui/preview.js",
+  "src/ui/shell.js",
   "src/ui/sidebar.js",
   "src/ui/topbar.js",
   "src/ui/welcome.js",
   "styles/app.css",
+  "styles/docs.css",
+  "styles/home.css",
+  "styles/preview.css",
   "vendor/chunk-FEONQHQG.js",
   "vendor/chunk-M7AD2PUT.js",
   "vendor/chunk-XRE6V766.js",
@@ -64,11 +79,15 @@ const PRECACHE = ["./",
   "vendor/lang-web.js",
   "icons/apple-touch-icon.png",
   "icons/favicon-32.png",
+  "icons/icon-1024.png",
   "icons/icon-192.png",
   "icons/icon-512.png",
-  "icons/icon.svg",
-  "icons/maskable-512.png",
-  "icons/maskable.svg"];
+  "icons/logo-mark-128.png",
+  "icons/logo-mark-256.png",
+  "icons/logo-mark-32.png",
+  "icons/logo-mark-512.png",
+  "icons/logo-mark-64.png",
+  "icons/maskable-512.png"];
 // </precache>
 const CACHE = 'luna-' + VERSION;
 
@@ -96,8 +115,12 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
-  if (url.origin !== location.origin) return; // GitHub-API usw. nicht cachen
-  if (url.pathname.endsWith('/collab')) return;
+  if (url.origin !== location.origin) return; // GitHub-API, Google usw. nicht cachen
+  if (url.pathname.endsWith('/collab') || url.pathname.includes('/api/')) return; // Konto & Sync immer live
+  if (url.pathname.endsWith('/luna.config.json')) {
+    event.respondWith(fetch(req).catch(() => caches.match(req)));
+    return;
+  }
 
   // Navigation: erst Netz (frische Version), sonst Cache
   if (req.mode === 'navigate') {
@@ -105,10 +128,11 @@ self.addEventListener('fetch', (event) => {
       try {
         const res = await fetch(req);
         const cache = await caches.open(CACHE);
-        cache.put('index.html', res.clone());
+        if (url.pathname.endsWith('/') || url.pathname.endsWith('/index.html')) cache.put('index.html', res.clone());
+        else cache.put(req, res.clone());
         return res;
       } catch {
-        return (await caches.match('index.html')) || (await caches.match('./')) || Response.error();
+        return (await caches.match(req, { ignoreSearch: true })) || (await caches.match('index.html')) || (await caches.match('./')) || Response.error();
       }
     })());
     return;

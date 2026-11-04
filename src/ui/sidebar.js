@@ -7,7 +7,7 @@ import {
   state as P, getFiles, filesSync, buildTree, sortedChildren, createFile, createFolder, deletePath, renamePath, duplicatePath,
   setDisplay, removeProject, renameProject, isModified, isNew, isIndexed, switchBranch, createBranch, deleteBranch, getProject, moveProject,
 } from '../projects/projects.js';
-import { listBranches, cancelSync, syncBranch, isSyncing } from '../projects/github.js';
+import { listBranches, cancelSync, syncBranch, isSyncing, pushChanges } from '../projects/github.js';
 import { zipProject, writeBackFolder, importFiles } from '../projects/folder.js';
 import { getSession, startSession, stopSession } from '../collab/session.js';
 import { openFile } from '../editor/editor.js';
@@ -243,6 +243,11 @@ export function openRepoMenu(p, anchor) {
     { label: 'Umbenennen …', icon: icon.edit, onClick: async () => { const n = await prompt('Repository umbenennen', { value: p.name }); if (n) renameProject(p, n); } },
     { label: 'Als ZIP herunterladen', icon: icon.download, onClick: async () => download(`${p.name}-${p.branch}.zip`, await zipProject(p)) },
     p.source === 'folder' ? { label: 'Änderungen in Ordner schreiben', icon: icon.upload, onClick: async () => { try { const n = await writeBackFolder(p); toast(`${n} Datei(en) gespeichert.`, { type: 'success' }); } catch (e) { toast(e.message, { type: 'error' }); } } } : null,
+    p.source === 'github' ? { label: 'Änderungen pushen …', icon: icon.upload, onClick: async () => {
+      const msg = await prompt('Änderungen nach GitHub pushen', { value: 'Änderungen aus Luna', label: `${p.owner}/${p.repo} · Branch ${p.branch} – Commit-Nachricht:`, ok: 'Pushen' });
+      if (!msg) return;
+      try { const n = await pushChanges(p, msg); if (!n) toast('Keine Änderungen zum Pushen.'); } catch (e) { toast(e.message, { type: 'error' }); }
+    } } : null,
     p.source === 'github' ? { label: 'Auf GitHub öffnen', icon: icon.github, onClick: () => window.open(`${p.htmlUrl || `https://github.com/${p.owner}/${p.repo}`}/tree/${p.branch}`, '_blank', 'noopener') } : null,
     P.list.length > 1 ? { label: 'Nach oben', icon: icon.arrowLeft, onClick: () => moveProject(p, -1), disabled: P.list[0] === p } : null,
     '-',

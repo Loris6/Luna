@@ -150,3 +150,47 @@ state.remote.set('github', {
 });
 
 export { syncBranch, listBranches, switchBranch, scopeOf, markRecDirty };
+
+// ---------- GitHub-Verbindung (Token) ----------
+export async function githubUser() {
+  if (!app.settings.githubToken) return null;
+  return api('/user');
+}
+
+export async function listUserRepos() {
+  return api('/user/repos?per_page=60&sort=updated&affiliation=owner,collaborator,organization_member');
+}
+
+/** Lokale Änderungen als Commit auf den aktuellen Branch hochladen (Git Data API). */
+export async function pushChanges(p, message = 'Änderungen aus Luna') {
+  if (p.source !== 'github') throw new Error('Nur GitHub-Repositories können gepusht werden.');
+  if (!app.settings.githubToken) throw new Error('Bitte zuerst GitHub verbinden (Token unter Verbindungen).');
+  const files = await getFiles(p);
+  const changed = [...files.values()].filter((r) => !r.placeholder && r.content != null && (r.baseline === null || r.content !== r.baseline));
+  const deletedPaths = p.pendingDeletes || [];
+  if (!changed.length && !deletedPaths.length) return 0;
+  const repo = `/repos/${p.owner}/${p.repo}`;
+  const post = async (path, body, method = 'POST') => {
+    const res = await fetch(API + path, { method, headers: { ...headers(), 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!res.ok) throw new Error(res.status === 403 || res.status === 404 ? 'Keine Schreibrechte – braucht der Token „repo“-Rechte?' : `GitHub antwortet mit ${res.status}`);
+    return res.json();
+  };
+  const ref = await api(`${repo}/git/ref/heads/${encodeURIComponent(p.branch)}`);
+  const base = await api(`${repo}/git/commits/${ref.object.sha}`);
+  const tree = [];
+  for (const r of changed) {
+    const blob = await post(`${repo}/git/blobs`, { content: r.content, encoding: 'utf-8' });
+    tree.push({ path: r.path, mode: '100644', type: 'blob', sha: blob.sha });
+  }
+  for (const path of deletedPaths) tree.push({ path, mode: '100644', type: 'blob', sha: null });
+  const newTree = await post(`${repo}/git/trees`, { base_tree: base.tree.sha, tree });
+  const commit = await post(`${repo}/git/commits`, { message, tree: newTree.sha, parents: [ref.object.sha] });
+  await post(`${repo}/git/refs/heads/${encodeURIComponent(p.branch)}`, { sha: commit.sha }, 'PATCH');
+  for (const r of changed) { r.baseline = r.content; markRecDirty(r); }
+  p.pendingDeletes = [];
+  p.branches[p.branch] = { ...p.branches[p.branch], sha: commit.sha, remoteSha: commit.sha, syncedAt: Date.now() };
+  await saveProject(p);
+  app.emit('tree-changed', p);
+  app.notify(`${changed.length + deletedPaths.length} Änderung(en) nach ${p.owner}/${p.repo} (${p.branch}) gepusht.`);
+  return changed.length + deletedPaths.length;
+}

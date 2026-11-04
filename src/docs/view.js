@@ -65,7 +65,7 @@ export function renderDocPage(e) {
 export function renderGuide(el) {
   el.replaceChildren(h('article', { class: 'doc-page guide' },
     h('nav', { class: 'doc-crumbs' }, h('span', {}, 'Dokumentation'), h('span', {}, '/'), h('span', {}, 'Luna-Handbuch')),
-    h('header', { class: 'doc-head' }, h('img', { src: 'icons/icon.svg', width: 40, height: 40, alt: '' }), h('div', {}, h('h1', {}, 'Luna-Handbuch'), h('div', { class: 'doc-meta' }, h('span', { class: 'pill lang' }, 'Luna'), h('span', { class: 'pill' }, 'wie Luau – für alle')))),
+    h('header', { class: 'doc-head' }, h('img', { src: 'icons/icon-192.png', width: 40, height: 40, alt: '' }), h('div', {}, h('h1', {}, 'Luna-Handbuch'), h('div', { class: 'doc-meta' }, h('span', { class: 'pill lang' }, 'Luna'), h('span', { class: 'pill' }, 'wie Luau – für alle')))),
     h('nav', { class: 'guide-toc' }, GUIDE.map((g) => h('a', { href: '#', onclick: (ev) => { ev.preventDefault(); scrollGuide(el, g.id); } }, g.title))),
     GUIDE.map((g) => h('section', { class: 'guide-sec', dataset: { id: g.id } },
       h('h2', {}, g.title),

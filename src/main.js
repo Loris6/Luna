@@ -9,7 +9,14 @@ import { resumeSessions, joinSession } from './collab/session.js';
 import {
   initEditor, openFile, openDoc, openWelcome, restoreTabs, toggleSplit, navBack, navForward, activeTab, closeTab, insertAtCursor, panes, openCustom,
 } from './editor/editor.js';
-import { renderGuide, scrollGuide } from './docs/view.js';
+import { auth } from './core/auth.js';
+import { setDbUser } from './core/db.js';
+import { secure } from './core/secure.js';
+import { sync } from './core/sync.js';
+import { applyPlatformClasses } from './core/platform.js';
+import { showLogin } from './ui/login.js';
+import { initShell, go } from './ui/shell.js';
+import { openDocs } from './ui/home.js';
 import { initSidebar, showPanel, fileMenu, renameItem } from './ui/sidebar.js';
 import { initTopbar } from './ui/topbar.js';
 import { initPanels } from './ui/panels.js';
@@ -20,8 +27,18 @@ import { toast } from './ui/dialog.js';
 import { icon } from './core/icons.js';
 
 async function boot() {
+  applyPlatformClasses();
+  // ---------- Konto: ohne Anmeldung (E-Mail) geht es nicht weiter ----------
+  await auth.init();
+  $('#app .splash')?.remove();
+  if (!auth.signedIn) await showLogin();
+  await setDbUser(auth.user.id);
   await app.init();
+  if (!app.settings.userName || app.settings.userName === 'Gast') app.set('userName', auth.user.name || auth.user.email.split('@')[0]);
   keyboard.setMode(app.settings.completion);
+  auth.on('expired', () => { toast('Sitzung abgelaufen – bitte neu anmelden.', { type: 'error' }); auth.clear(); setTimeout(() => location.reload(), 1200); });
+  secure.initAppLock();
+  if (secure.config.lockApp && secure.hasProtection) await secure.lockNow();
 
   // ---------- Layout ----------
   const topbar = h('header', { class: 'topbar' });
@@ -31,25 +48,26 @@ async function boot() {
   const right = h('aside', { class: 'right-panel' });
   const scrim = h('div', { class: 'scrim', onclick: () => app.set('sidebarOpen', false) });
   const main = h('main', { class: 'workbench' }, sidebar, scrim, h('div', { class: 'center' }, editorArea, bottom), right);
-  const shell = $('#app');
-  shell.replaceChildren(topbar, main);
+  const homeEl = h('section', { class: 'home-view' });
+  const footer = h('nav', { class: 'app-footer', 'aria-label': 'Navigation' });
+  const root = $('#app');
+  root.replaceChildren(topbar, main, homeEl, footer);
   applyLayout();
 
   await loadProjects();
+  sync.init().catch((e) => console.warn('Sync', e));
   await initEditor(editorArea);
   initSidebar(sidebar);
   initTopbar(topbar);
   initPanels(bottom, right);
   initKeyBar();
+  initShell({ homeEl, footerEl: footer });
 
   app.on('render-welcome', (el) => renderWelcome(el));
-  app.on('show-welcome', () => openWelcome());
-  app.on('open-guide', (section = 'start') => {
-    const tab = openCustom('luna-guide', 'Luna-Handbuch', (el) => renderGuide(el), { iconKey: 'doc' });
-    requestAnimationFrame(() => scrollGuide(tab.el, section));
-    if (isNarrow()) app.set('sidebarOpen', false);
-  });
-  app.on('open-doc', (id) => { openDoc(id); if (isNarrow()) app.set('sidebarOpen', false); });
+  app.on('show-welcome', () => go('home', 'overview'));
+  // Dokumentation ist eine eigene Seite (docs.html)
+  app.on('open-guide', (section = 'start') => openDocs('handbuch/' + section));
+  app.on('open-doc', (id) => openDocs('referenz/' + encodeURIComponent(id)));
   app.on('show-docs', (opts = {}) => { app.set('sidebarOpen', true); showPanel('docs', opts); });
   app.on('show-search', () => { app.set('sidebarOpen', true); showPanel('search', { focus: true }); });
   app.on('show-live', () => livePopover($('.icon-btn.live')));
@@ -83,13 +101,14 @@ async function boot() {
   // ---------- Inhalte wiederherstellen ----------
   const restored = await restoreTabs();
   if (!restored) {
-    const demo = P.list.find((p) => p.name === 'Luna Demo') || P.list[0];
-    if (demo && !isNarrow()) {
-      await openFile(demo, 'main.luna', { focus: false });
-      if (innerWidth > 1100 && innerHeight > 700) { toggleSplit('column'); await openFile(demo, 'helfer.luna', { pane: panes[1], focus: false }); }
-    } else openWelcome();
+    const demo = P.list.find((p) => p.lunaDemo) || P.list.find((p) => p.name === 'Luna Demo') || P.list[0];
+    if (demo) {
+      await openFile(demo, 'main.luna', { focus: false }).catch(() => {});
+      if (!isNarrow() && innerWidth > 1100 && innerHeight > 700) { toggleSplit('column'); await openFile(demo, 'helfer.luna', { pane: panes[1], focus: false }).catch(() => {}); }
+    }
   }
-  if (isNarrow() && !restored) app.set('sidebarOpen', false);
+  if (isNarrow()) { app.set('sidebarOpen', false); app.set('rightOpen', false); }
+  go(isNarrow() ? 'home' : 'ide', 'overview');
 
   await resumeSessions();
   await handleHash();

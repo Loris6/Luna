@@ -62,8 +62,15 @@ Kommentare mit `--`, `-- mitten in der Zeile --` und `--[[ … ]]`. Das komplett
 | **Live-Zusammenarbeit** | Link teilen → gemeinsam in denselben Dateien arbeiten. Der Cursor der anderen Person erscheint als farbiges **„\|“ mit Namensschild** darüber. Avatare oben, Punkte an Tabs/Dateien, „Folgen“ per Klick. Konfliktfrei dank Yjs (CRDT). |
 | **Prüfungen** | Luna-Regeln mit verständlichen Meldungen und Ein-Klick-Korrektur: Funktion ohne `end)`, `if … end)`, `const` geändert, `create` ohne `import Html`, `local`-Funktion aus einem anderen Script aufgerufen, unbekannte Namen · grüner Haken bzw. rotes Zähler-Badge am Zeilenende, Liste im Panel „Probleme“ |
 | **Ausführen** | ▶ bzw. `Strg/⌘ + Enter` startet alle `.luna`-Scripts des Projekts gleichzeitig (`main.luna` zuerst) · `print` erscheint in der Konsole (mit Sprung zur Zeile) · Buttons, Texte, Schalter … in der Vorschau rechts · `discord` als Test-Chat · Stopp mit ■ oder `⇧F5` |
-| **Doku** | Luna-Handbuch + Kurz-Doku zu jedem Vorschlag mit Beispiel – alles offline |
-| **PWA** | Installierbar, offline nutzbar (Service Worker), Window-Controls-Overlay am Desktop, Dateien aus dem Betriebssystem öffnen, App-Shortcuts |
+| **Konto (Pflicht)** | Ohne Konto mit E-Mail-Adresse geht nichts. Anmeldung **mit Google** oder E-Mail + Passwort. Mit Luna-Server werden Projekte, Webhooks und die GitHub-Verbindung zwischen **PC, Handy und Tablet** synchronisiert (neuere Änderung gewinnt). |
+| **Dashboard** | Übersicht, Projekte, Verbindungen (GitHub, Google, Discord, Luna-Server), Webhooks, Einstellungen – links Navigation am Desktop, auf dem Handy **iOS-Tab-Bar** (Apple-Geräte) bzw. **normaler Footer** (Android) |
+| **Sicherheit** | App-Passwort oder geräteabhängig **Face ID / Touch ID / Fingerabdruck / Windows Hello** · App beim Öffnen und nach Inaktivität sperren · „Passwort vergessen?“ → richtige Konto-E-Mail → neues Passwort |
+| **Webhooks** | Eigene Webhooks (z. B. Discord) mit API-Secret – anzeigen, kopieren, neu erzeugen und löschen nur nach Bestätigung · in Luna: `import Webhook` → `Webhook.send("Name", "Text")` |
+| **GitHub** | Mit Token verbinden, eigene Repositories auswählen und importieren, **Änderungen pushen** (Commit auf den aktuellen Branch) |
+| **Vorschau** | Überall mit Geräte-Modus: Passend, PC (1280/1440/1920), Tablet (iPad, iPad Pro, iPad mini, Android), Handy (iPhone 15, 15 Pro Max, SE, Pixel 8, Galaxy S24) – hoch und quer |
+| **Doku** | Eigene Seite **docs.html**: Handbuch, Referenz, Suche (`Strg/⌘ K`), jedes Beispiel direkt ausführbar mit Geräte-Vorschau |
+| **Bedienung** | Kein elastisches Nachfedern/Überscrollen – weder in Listen noch im Editor; kein Zoom beim Tippen auf iOS |
+| **PWA** | Installierbar, offline nutzbar (Service Worker), Window-Controls-Overlay am Desktop, Dateien aus dem Betriebssystem öffnen, App-Shortcuts · App-Icon = Luna-Logo auf Weiß |
 
 ## Starten
 
@@ -76,6 +83,29 @@ npm start          # http://localhost:8080 – inkl. Live-Relay unter /collab
 Die App selbst (`src/`) läuft ohne Build als ES-Module. `vendor/` ist bereits gebaut im Repo enthalten –
 Luna kann also direkt als statische Seite gehostet werden (z. B. GitHub Pages).
 
+### Konten, Sync und Google-Anmeldung
+
+`server.js` (ohne Abhängigkeiten) stellt neben den Dateien auch die Konto- und Sync-API unter `/api` bereit.
+Daten liegen in `./data` (bzw. `LUNA_DATA=/pfad`) – Passwörter nur als scrypt-Hash.
+
+```bash
+GOOGLE_CLIENT_ID=123….apps.googleusercontent.com LUNA_DATA=/var/luna npm start
+```
+
+* **Google-Anmeldung:** In der [Google Cloud Console](https://console.cloud.google.com/apis/credentials) eine
+  OAuth-Client-ID (Typ „Webanwendung“) anlegen und die Adresse der App unter „Autorisierte JavaScript-Quellen“
+  eintragen. Die ID als `GOOGLE_CLIENT_ID` setzen oder in `luna.config.json` (`googleClientId`) eintragen.
+  Gleiche E-Mail-Adresse = gleiches Konto, egal ob per Google oder Passwort angemeldet.
+* **Ohne Server** (z. B. reines GitHub-Pages-Hosting) funktioniert Luna weiter – das Konto gilt dann nur auf dem
+  jeweiligen Gerät. Eine Server-Adresse lässt sich auf der Anmeldeseite („Server ändern“) oder in
+  `luna.config.json` (`serverUrl`) hinterlegen.
+* **Face ID / Fingerabdruck** nutzt WebAuthn und braucht HTTPS (oder `localhost`).
+
+### Logo & Icons
+
+`icons/logo-original.png` ist das Original. `python3 scripts/make-icons.py` erzeugt daraus die App-Icons
+(weißer Hintergrund, etwas kleiner skaliert) und das transparente Logo für `.luna`-Dateien.
+
 ### Live-Sessions über mehrere Geräte
 
 * **Gleiches Gerät** (mehrere Tabs/Fenster): funktioniert immer, auch ohne Server.
@@ -87,10 +117,13 @@ Luna kann also direkt als statische Seite gehostet werden (z. B. GitHub Pages).
 ## Aufbau
 
 ```
-index.html, manifest.webmanifest, sw.js    PWA-Grundgerüst
-server.js                                  statischer Server + WebSocket-Relay für Live-Sessions
-src/main.js                                Start, Layout, Tastenkürzel, PWA
-src/core/        keyboard.js (Tastatur-Erkennung), langs.js, icons.js, db.js (IndexedDB), store.js
+index.html, docs.html, manifest, sw.js     App, Doku-Seite, PWA-Grundgerüst
+server.js                                  Dateien + Konto/Sync-API (/api) + WebSocket-Relay (/collab)
+luna.config.json                           googleClientId, serverUrl
+src/main.js                                Start: Anmeldung → Sperre → Dashboard/Editor
+src/docs-page.js                           die Doku-Seite
+src/core/        auth.js (Konto, Google), sync.js, secure.js (Passwort/Face ID/Fingerabdruck), webhooks.js,
+                 platform.js (iOS/Android), keyboard.js, langs.js, icons.js, db.js (IndexedDB je Konto), store.js
 src/config.js    welche Sprachen aktiv sind (erstmal nur Luna)
 src/luna/        parser.js (Lexer/Parser), runtime.js (Interpreter + Html/discord/Http/Storage),
                  language.js (Einfärbung, Einrückung, auto end), analysis.js (Prüfung), project.js
@@ -99,9 +132,10 @@ src/editor/      editor.js (Tabs/Panes/Statuszeile), completion.js (Vorschläge 
 src/docs/        registry.js, view.js (Doku-Seiten, Handbuch), data/luna.js (+ abgeschaltete Sprachen)
 src/projects/    projects.js, github.js, folder.js, gitignore.js, templates.js
 src/collab/      session.js (Yjs + Awareness, BroadcastChannel + WebSocket)
-src/ui/          topbar.js, sidebar.js, menu.js, dialog.js, actions.js, panels.js, welcome.js
-styles/app.css   Oberfläche inkl. Handy-Ansicht (≤ 760 px)
-scripts/         build.mjs, icons.mjs, vendor/*.js (Bundle-Einstiegspunkte)
+src/ui/          shell.js (Ansichten + Footer), home.js (Dashboard), login.js, preview.js (Geräte),
+                 topbar.js, sidebar.js, menu.js, dialog.js, actions.js, panels.js, welcome.js
+styles/          app.css (Editor), home.css (Dashboard, Anmeldung, Footer), preview.css, docs.css
+scripts/         build.mjs, make-icons.py, vendor/*.js (Bundle-Einstiegspunkte)
 ```
 
 ## Tastenkürzel (mit Tastatur)
@@ -118,4 +152,4 @@ scripts/         build.mjs, icons.mjs, vendor/*.js (Bundle-Einstiegspunkte)
 | Gehe zu Zeile | `Strg/⌘ + G` |
 | Zurück / Vor | `Alt + ←` / `Alt + →` |
 
-Alle Daten bleiben lokal im Browser (IndexedDB). Ein GitHub-Token wird nur lokal gespeichert.
+Projekte liegen im Browser (IndexedDB, getrennt je Konto) und – mit Luna-Server – zusätzlich in deinem Konto auf dem Server.

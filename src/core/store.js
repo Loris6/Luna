@@ -22,6 +22,7 @@ const defaults = {
   bottomHeight: 220,
   rightWidth: 420,
   workspaceName: 'Mein Workspace',
+  previewDevice: 'fit',
 };
 
 class App extends Emitter {
@@ -40,6 +41,7 @@ class App extends Emitter {
     this.settings[key] = value;
     this.saveSettings();
     this.emit('settings', { key, value });
+    if (key === 'githubToken') this.emit('account-meta-changed');
   }
   saveSettings() { kv.set('settings', this.settings); }
 

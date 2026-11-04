@@ -14,7 +14,7 @@ export function renderWelcome(el) {
   const recent = recentFiles().slice(0, 6);
   el.replaceChildren(h('div', { class: 'welcome' },
     h('div', { class: 'wl-hero' },
-      h('img', { src: 'icons/icon.svg', alt: '', class: 'wl-logo', width: 72, height: 72 }),
+      h('img', { src: 'icons/icon-192.png', alt: '', class: 'wl-logo', width: 72, height: 72 }),
       h('div', {}, h('h1', {}, 'Luna'), h('p', { class: 'muted' }, 'Die IDE für die Sprache Luna – wie Luau, aber für alle. Offline nutzbar, als App installierbar, gemeinsam live bearbeiten.'))),
     h('div', { class: 'wl-grid' },
       h('section', {},

@@ -40,12 +40,12 @@ writeFileSync(join(fonts, 'fonts.css'), faces.join('\n') + '\n');
 console.log('✓ Schriften kopiert');
 
 // 3) Offline-Liste für den Service Worker
-const files = ['./', 'index.html', 'manifest.webmanifest'];
+const files = ['./', 'index.html', 'docs.html', 'manifest.webmanifest', 'luna.config.json'];
 const walk = (dir) => {
   for (const name of readdirSync(join(root, dir))) {
     const rel = join(dir, name);
     if (statSync(join(root, rel)).isDirectory()) walk(rel);
-    else if (!name.startsWith('.')) files.push(relative(root, join(root, rel)).split('\\').join('/'));
+    else if (!name.startsWith('.') && name !== 'logo-original.png') files.push(relative(root, join(root, rel)).split('\\').join('/'));
   }
 };
 ['src', 'styles', 'vendor', 'icons'].forEach(walk);

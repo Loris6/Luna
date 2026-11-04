@@ -265,7 +265,7 @@ body.resizing iframe { pointer-events: none; }
 .tab-content.active { display: block; }
 .tab-content .cm-editor { height: 100%; }
 .tab-content .cm-editor.cm-focused { outline: none; }
-.pane.empty .pane-body::before { content: ''; position: absolute; inset: 0; background: url(../icons/icon.svg) center / 88px no-repeat; opacity: .08; }
+.pane.empty .pane-body::before { content: ''; position: absolute; inset: 0; background: url(../icons/logo-mark-256.png) center / 120px no-repeat; opacity: .12; filter: grayscale(1) brightness(3); }
 .loading-line { position: absolute; top: 0; left: 0; height: 2px; width: 40%; background: var(--accent); animation: load 1s ease-in-out infinite; }
 @keyframes load { from { left: -40%; } to { left: 100%; } }
 

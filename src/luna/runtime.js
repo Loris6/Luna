@@ -104,12 +104,13 @@ const macrotask = (() => {
 
 // Funktionen aus Bibliotheken, die erst nach import verfügbar sind
 export const LIB_GLOBALS = { create: 'Html', rgb: 'Html' };
-export const LIB_NAMES = { html: 'Html', http: 'Http', storage: 'Storage', discord: 'discord' };
+export const LIB_NAMES = { html: 'Html', http: 'Http', storage: 'Storage', discord: 'discord', webhook: 'Webhook' };
 
 // ---------- Interpreter ----------
 export class LunaRuntime {
-  constructor({ out, stageHost, projectId, onStatus, onStage }) {
+  constructor({ out, stageHost, projectId, onStatus, onStage, webhooks }) {
     this.out = out;
+    this.webhooks = webhooks || { list: [], send: async () => { throw new Error('Webhooks sind hier nicht verfügbar.'); } };
     this.stageHost = stageHost;
     this.projectId = projectId;
     this.onStatus = onStatus || (() => {});
@@ -882,6 +883,17 @@ const LIBRARIES = {
     const load = nat('Storage.load', ([k, d]) => { const raw = localStorage.getItem(key(k)); return raw == null ? d : toLuna(JSON.parse(raw)); });
     const remove = nat('Storage.remove', ([k]) => { localStorage.removeItem(key(k)); });
     return { object: new Library('Storage', { save, load, remove }) };
+  },
+  webhook(rt) {
+    const find = (name) => {
+      const w = rt.webhooks.list.find((x) => x.name.toLowerCase() === tostring(name).toLowerCase());
+      if (!w) throw new Error(`Webhook „${tostring(name)}“ gibt es nicht – lege ihn im Dashboard unter „Webhooks“ an.`);
+      return w;
+    };
+    const send = nat('Webhook.send', async ([name, data]) => { await rt.webhooks.send(find(name), typeof data === 'string' ? data : toJs(data)); return true; });
+    const list = nat('Webhook.list', () => toLuna(rt.webhooks.list.map((w) => w.name)));
+    const exists = nat('Webhook.exists', ([name]) => rt.webhooks.list.some((x) => x.name.toLowerCase() === tostring(name).toLowerCase()));
+    return { object: new Library('Webhook', { send, list, exists }) };
   },
   discord(rt) {
     rt.ui = rt.ui || new UIStage(rt);

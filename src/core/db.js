@@ -1,8 +1,46 @@
 // Minimaler Promise-Wrapper um IndexedDB. Alles bleibt lokal im Browser.
 
-const DB_NAME = 'luna-ide';
+const LEGACY_DB = 'luna-ide';
 const DB_VERSION = 1;
+let DB_NAME = LEGACY_DB;
 let dbPromise;
+
+/** Jedes Konto bekommt eine eigene Datenbank auf dem Gerät. */
+export async function setDbUser(userId) {
+  DB_NAME = 'luna-ide-u-' + String(userId).replace(/[^\w-]/g, '');
+  dbPromise = null;
+  await migrateLegacy();
+}
+
+// Daten aus der Zeit vor den Konten übernimmt das erste Konto, das sich auf diesem Gerät anmeldet.
+async function migrateLegacy() {
+  try {
+    if (localStorage.getItem('luna.legacyMigrated')) return;
+    localStorage.setItem('luna.legacyMigrated', '1');
+    if (indexedDB.databases) {
+      const list = await indexedDB.databases();
+      if (!list.some((d) => d.name === LEGACY_DB)) return;
+    }
+    const legacy = await new Promise((resolve) => {
+      const req = indexedDB.open(LEGACY_DB);
+      req.onupgradeneeded = () => { req.transaction.abort(); };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(null);
+    });
+    if (!legacy) return;
+    const stores = ['projects', 'files', 'kv', 'ystate'].filter((s) => legacy.objectStoreNames.contains(s));
+    for (const store of stores) {
+      const rows = await new Promise((resolve) => {
+        const r = legacy.transaction(store).objectStore(store).getAll();
+        r.onsuccess = () => resolve(r.result || []);
+        r.onerror = () => resolve([]);
+      });
+      if (rows.length) await db.putMany(store, rows);
+    }
+    legacy.close();
+    indexedDB.deleteDatabase(LEGACY_DB);
+  } catch (e) { console.warn('Alte Daten konnten nicht übernommen werden', e); }
+}
 
 function open() {
   if (dbPromise) return dbPromise;

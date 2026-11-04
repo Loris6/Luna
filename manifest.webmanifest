@@ -1,35 +1,101 @@
 {
   "name": "Luna – Code-Editor",
   "short_name": "Luna",
-  "description": "Code-Editor-IDE im Browser: offline nutzbar, installierbar, mit Live-Zusammenarbeit, Vorschlägen und Doku.",
+  "description": "Die IDE für die Programmiersprache Luna: offline nutzbar, installierbar, mit Konto-Sync zwischen PC, Handy und Tablet.",
   "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone"],
+  "display_override": [
+    "window-controls-overlay",
+    "standalone"
+  ],
   "orientation": "any",
   "background_color": "#0b0b0f",
   "theme_color": "#0b0b0f",
   "lang": "de",
   "dir": "ltr",
-  "categories": ["developer", "productivity", "utilities"],
+  "categories": [
+    "developer",
+    "productivity",
+    "utilities"
+  ],
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
-    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-1024.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ],
   "shortcuts": [
-    { "name": "Neues Projekt", "url": "./#new", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
-    { "name": "Live-Session beitreten", "url": "./#join", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+    {
+      "name": "Dashboard",
+      "url": "./",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Dokumentation",
+      "url": "./docs.html",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Live-Session beitreten",
+      "url": "./#join",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
   ],
   "file_handlers": [
     {
       "action": "./",
       "accept": {
-        "text/plain": [".txt", ".md", ".js", ".mjs", ".ts", ".tsx", ".jsx", ".json", ".html", ".css", ".py", ".java", ".kt", ".lua", ".yml", ".yaml", ".xml", ".sh"]
+        "text/plain": [
+          ".luna",
+          ".lu",
+          ".txt",
+          ".md",
+          ".json"
+        ]
       }
     }
   ],
-  "launch_handler": { "client_mode": ["focus-existing", "auto"] }
+  "launch_handler": {
+    "client_mode": [
+      "focus-existing",
+      "auto"
+    ]
+  }
 }

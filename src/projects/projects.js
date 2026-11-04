@@ -1,6 +1,7 @@
 // Projekte („Repos“), Branches und Dateien. Alles wird in IndexedDB gespeichert.
 import { db, kv } from '../core/db.js';
 import { app, COLORS } from '../core/store.js';
+import { auth } from '../core/auth.js';
 import { uid, basename, dirname, normalizePath, isBinaryPath, debounce } from '../core/util.js';
 import { compileGitignore } from './gitignore.js';
 import { TEMPLATES, DEMO_VERSION } from './templates.js';
@@ -30,7 +31,8 @@ export async function loadProjects() {
       if (untouched) await removeProject(old); else { old.name = 'Altes Demo'; await saveProject(old); }
     }
     if (version === 0 || !state.list.some((p) => p.lunaDemo)) {
-      const p = await createProject({ name: 'Luna Demo', template: 'demo', color: '#3e63dd', extra: { lunaDemo: true } });
+      // feste ID pro Konto → auf allen Geräten dasselbe Demo-Projekt (keine Duplikate beim Synchronisieren)
+      const p = await createProject({ name: 'Luna Demo', template: 'demo', color: '#3e63dd', extra: { lunaDemo: true, id: 'demo-' + (auth.user?.id || 'local') }, seedMtime: 1 });
       state.list.splice(state.list.indexOf(p), 1);
       state.list.unshift(p);
       state.list.forEach((x, i) => { x.order = i; saveProject(x); });
@@ -41,10 +43,18 @@ export async function loadProjects() {
   return state.list;
 }
 
-export function saveProject(p) {
+/** Wird von der Synchronisierung gesetzt: meldet lokale Änderungen. */
+export const hooks = { file: null, project: null };
+
+export function cleanProject(p) {
   const clean = { ...p };
   for (const k of Object.keys(clean)) if (k.startsWith('_')) delete clean[k];
-  return db.put('projects', clean);
+  return clean;
+}
+
+export function saveProject(p, { silent = false } = {}) {
+  if (!silent) { p.mtime = Date.now(); hooks.project?.(p.id); }
+  return db.put('projects', cleanProject(p));
 }
 
 export async function getFiles(p, branch = p.branch) {
@@ -79,14 +89,19 @@ export const flushNow = () => flush.flush();
 addEventListener('pagehide', () => flush.flush());
 document.addEventListener('visibilitychange', () => { if (document.hidden) flush.flush(); });
 
-function markDirty(scope, path) {
+function markDirty(scope, path, { silent = false } = {}) {
   if (!dirty.has(scope)) dirty.set(scope, new Set());
   dirty.get(scope).add(path);
   flush();
+  if (!silent) hooks.file?.(scope, path, false);
+}
+function markDeleted(scope, path) {
+  deleted.push([scope, path]);
+  hooks.file?.(scope, path, true);
 }
 
 // ---------- Projekte ----------
-export async function createProject({ name, template = 'empty', files, source = 'local', color, extra = {}, branch = 'main' }) {
+export async function createProject({ name, template = 'empty', files, source = 'local', color, extra = {}, branch = 'main', seedMtime = null }) {
   const p = {
     id: uid(8), name, source, branch, defaultBranch: branch,
     branches: { [branch]: { status: 'synced', syncedAt: Date.now() } },
@@ -103,9 +118,11 @@ export async function createProject({ name, template = 'empty', files, source = 
   const recs = [];
   for (const [path, value] of Object.entries(content)) {
     const rec = makeRec(scope, path, value);
+    if (seedMtime != null) rec.mtime = seedMtime; // Vorlagen-Inhalt: echte Änderungen anderer Geräte sind immer „neuer“
     map.set(rec.path, rec); recs.push(rec);
   }
   if (recs.length) await db.putMany('files', recs);
+  for (const r of recs) hooks.file?.(scope, r.path, false);
   app.emit('projects-changed');
   return p;
 }
@@ -119,7 +136,8 @@ function makeRec(scope, path, value) {
   return { scope, path, content: value, baseline: value, size: value.length, mtime: Date.now() };
 }
 
-export async function removeProject(p) {
+export async function removeProject(p, { silent = false } = {}) {
+  if (!silent) hooks.project?.(p.id, true);
   for (const b of Object.keys(p.branches || {})) await db.delByIndex('files', 'scope', scopeOf(p, b));
   await db.del('projects', p.id);
   state.list = state.list.filter((x) => x !== p);
@@ -185,7 +203,7 @@ export async function createFile(p, path, content = '', { origin = 'user' } = {}
   if (files.has(path)) throw new Error(`„${path}“ existiert bereits.`);
   // Platzhalter für leeren Ordner entfernen
   const keep = dirname(path) ? dirname(path) + '/.keep' : null;
-  if (keep && files.get(keep)?.placeholder) { files.delete(keep); deleted.push([scopeOf(p), keep]); }
+  if (keep && files.get(keep)?.placeholder) { files.delete(keep); markDeleted(scopeOf(p), keep); }
   const rec = makeRec(scopeOf(p), path, content);
   rec.baseline = null;
   files.set(path, rec);
@@ -212,7 +230,11 @@ export async function deletePath(p, path, { origin = 'user' } = {}) {
   const scope = scopeOf(p);
   const removed = [];
   for (const k of [...files.keys()]) {
-    if (k === path || k.startsWith(path + '/')) { files.delete(k); deleted.push([scope, k]); removed.push(k); dirty.get(scope)?.delete(k); }
+    if (k === path || k.startsWith(path + '/')) {
+      const rec = files.get(k);
+      if (p.source === 'github' && rec?.sha && !rec.placeholder) (p.pendingDeletes ||= []).push(k);
+      files.delete(k); markDeleted(scope, k); removed.push(k); dirty.get(scope)?.delete(k);
+    }
   }
   // Leeren Elternordner erhalten
   const parent = dirname(path);
@@ -221,6 +243,7 @@ export async function deletePath(p, path, { origin = 'user' } = {}) {
     markDirty(scope, parent + '/.keep');
   }
   flush();
+  if (p.pendingDeletes?.length) saveProject(p);
   app.emit('tree-changed', p);
   app.emit('paths-removed', { project: p, paths: removed });
   const live = state.live.get(p.id);
@@ -237,7 +260,7 @@ export async function renamePath(p, from, to) {
     if (k === from || k.startsWith(from + '/')) {
       const rec = files.get(k);
       const nk = to + k.slice(from.length);
-      files.delete(k); deleted.push([scope, k]);
+      files.delete(k); markDeleted(scope, k);
       rec.path = nk; files.set(nk, rec); markDirty(scope, nk);
       moves.push([k, nk]);
     }
@@ -336,6 +359,7 @@ export async function createBranch(p, name, from = p.branch) {
   for (const rec of src.values()) map.set(rec.path, { ...rec, scope });
   state.files.set(scope, map);
   await db.putMany('files', [...map.values()]);
+  for (const r of map.values()) hooks.file?.(scope, r.path, false);
   p.branches[name] = { status: 'synced', syncedAt: Date.now(), local: true, from };
   await switchBranch(p, name);
 }
@@ -358,7 +382,60 @@ export async function replaceScopeFiles(p, branch, recs) {
   for (const r of recs) { r.scope = scope; map.set(r.path, r); }
   state.files.set(scope, map);
   await db.putMany('files', recs);
+  for (const r of recs) hooks.file?.(scope, r.path, false);
   app.emit('tree-changed', p);
+}
+
+// ---------- Änderungen von anderen Geräten (Synchronisierung) ----------
+export async function applyRemoteProject(r) {
+  const local = getProject(r.id);
+  if (r.deleted) { if (local) await removeProject(local, { silent: true }); return; }
+  if (!r.meta) return;
+  if (!local) {
+    const p = { ...r.meta, mtime: r.mtime, order: state.list.length };
+    delete p.liveRoom; delete p.liveRole;
+    state.list.push(p);
+    await db.put('projects', cleanProject(p));
+    app.emit('projects-changed');
+    return;
+  }
+  if ((r.mtime || 0) <= (local.mtime || 0)) return;
+  const keep = { liveRoom: local.liveRoom, liveRole: local.liveRole, order: local.order, collapsed: local.collapsed };
+  const branchChanged = local.branch !== r.meta.branch;
+  Object.assign(local, r.meta, keep, { mtime: r.mtime });
+  await saveProject(local, { silent: true });
+  if (branchChanged) { await getFiles(local).catch(() => {}); app.emit('branch-switched', local); }
+  app.emit('projects-changed');
+}
+
+export async function applyRemoteFile(f) {
+  const at = f.scope.indexOf('@');
+  const p = getProject(f.scope.slice(0, at));
+  // Dateiliste zuerst laden, damit keine gleichzeitige Anzeige einen veralteten Stand zwischenspeichert
+  const map = p ? await getFiles(p, f.scope.slice(at + 1)).catch(() => null) : state.files.get(f.scope);
+  const local = map ? map.get(f.path) : await db.get('files', [f.scope, f.path]).catch(() => null);
+  if (local && (local.mtime || 0) > (f.mtime || 0)) return false;
+  if (f.deleted) {
+    if (!local) return false;
+    map?.delete(f.path);
+    await db.del('files', [f.scope, f.path]);
+    if (p && map) { app.emit('tree-changed', p); app.emit('paths-removed', { project: p, paths: [f.path] }); }
+    return true;
+  }
+  if (local && local.content === f.content) { local.mtime = f.mtime; return false; }
+  const rec = { ...(local || {}), scope: f.scope, path: f.path, content: f.content, size: (f.content || '').length, mtime: f.mtime, remote: false, placeholder: !!f.placeholder };
+  if (!local) rec.baseline = null;
+  map?.set(f.path, rec);
+  await db.put('files', rec);
+  if (p && map) {
+    if (!local) app.emit('tree-changed', p);
+    else app.emit('file-changed', { project: p, path: f.path, origin: 'sync' });
+  }
+  return true;
+}
+
+export async function readRecord(scope, path) {
+  return state.files.get(scope)?.get(path) || db.get('files', [scope, path]).catch(() => null);
 }
 
 export function markRecDirty(rec) { markDirty(rec.scope, rec.path); }

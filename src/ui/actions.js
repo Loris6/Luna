@@ -115,35 +115,9 @@ export function livePopover(anchor) {
   showMenu(anchor, [{ custom: box }], { align: 'end', className: 'live-menu', onClose: () => offs.forEach((f) => f()), noFocus: true });
 }
 
-// ---------- Einstellungen ----------
+// ---------- Einstellungen (eigene Seite im Dashboard) ----------
 export function settingsDialog() {
-  const s = app.settings;
-  const field = (label, control, hint) => h('div', { class: 'set-row' }, h('div', {}, h('div', { class: 'set-label' }, label), hint ? h('div', { class: 'muted small' }, hint) : null), control);
-  const select = (key, options) => h('select', { class: 'input', onchange: (e) => { const v = e.target.value; app.set(key, isNaN(+v) || v === '' ? v : +v); } }, options.map(([v, l]) => h('option', { value: v, selected: String(s[key]) === String(v) }, l)));
-  const toggle = (key) => h('label', { class: 'switch' }, h('input', { type: 'checkbox', checked: s[key], onchange: (e) => app.set(key, e.target.checked) }), h('span'));
-  const kbState = h('span', { class: 'muted small' }, keyboard.describe());
-  const install = h('button', { class: 'btn', hidden: !window.__lunaInstall, onclick: () => app.emit('install-app') }, frag(icon.install), 'App installieren');
-  openDialog({
-    title: 'Einstellungen',
-    wide: true,
-    body: h('div', { class: 'settings' },
-      h('h3', {}, 'Profil'),
-      field('Name', h('input', { class: 'input', value: s.userName, placeholder: 'Wird anderen in Live-Sessions angezeigt', oninput: (e) => app.set('userName', e.target.value.trim()) })),
-      field('Farbe', h('div', { class: 'colors' }, COLORS.map((c) => h('button', { type: 'button', class: 'color' + (c === s.userColor ? ' on' : ''), style: { background: c }, onclick: (e) => { app.set('userColor', c); e.target.parentNode.querySelectorAll('.color').forEach((b) => b.classList.toggle('on', b === e.target)); } }))), 'Farbe deines Cursors und Namensschilds.'),
-      h('h3', {}, 'Editor'),
-      field('Schriftgröße', select('fontSize', [11, 12, 13, 14, 15, 16, 18, 20].map((n) => [n, n + ' px']))),
-      field('Tabulatorbreite', select('tabSize', [[2, '2 Leerzeichen'], [4, '4 Leerzeichen'], [8, '8 Leerzeichen']])),
-      field('Zeilenumbruch', toggle('lineWrapping')),
-      field('Smart-Modus', toggle('smartMode'), 'Vorschläge und Prüfungen (Blitz-Symbol).'),
-      field('Vorschläge', select('completion', [['auto', 'Automatisch (nur mit Tastatur)'], ['on', 'Immer anzeigen'], ['off', 'Nie anzeigen']]), kbState),
-      h('h3', {}, 'Verbindungen'),
-      field('Live-Server', h('input', { class: 'input', value: s.collabServer, placeholder: collabServerUrl(), oninput: (e) => app.set('collabServer', e.target.value.trim()) }), 'WebSocket-Adresse für Sessions über mehrere Geräte. Leer = automatisch.'),
-      field('GitHub-Token', h('input', { class: 'input', type: 'password', value: s.githubToken, placeholder: 'optional (ghp_…)', oninput: (e) => app.set('githubToken', e.target.value.trim()) }), 'Nur lokal gespeichert. Für private Repos & höhere Limits.'),
-      h('h3', {}, 'App'),
-      h('div', { class: 'set-actions' }, install, h('button', { class: 'btn', onclick: () => location.reload() }, frag(icon.refresh), 'Neu laden')),
-    ),
-    actions: [{ label: 'Fertig', primary: true }],
-  });
+  app.emit('go', { view: 'home', route: 'settings' });
 }
 
 // ---------- Schnell öffnen (Strg/⌘+P) ----------
@@ -209,7 +183,9 @@ export function commands() {
     { label: 'Dokumentation durchsuchen', ic: icon.docs, run: () => app.emit('show-docs', { focus: true }) },
     { label: 'Gehe zu Zeile …', ic: icon.arrowRight, shortcut: `${modKey}G`, run: () => app.emit('goto-line') },
     { label: 'Einstellungen', ic: icon.settings, shortcut: `${modKey},`, run: settingsDialog },
-    { label: 'Willkommen', ic: icon.moon, run: () => app.emit('show-welcome') },
+    { label: 'Dashboard', ic: icon.homeLine, run: () => app.emit('go', { view: 'home', route: 'overview' }) },
+    { label: 'Webhooks', ic: icon.webhook, run: () => app.emit('go', { view: 'home', route: 'webhooks' }) },
+    { label: 'Verbindungen (GitHub, Discord …)', ic: icon.plug, run: () => app.emit('go', { view: 'home', route: 'connections' }) },
   ];
 }
 function commandItems(q) {

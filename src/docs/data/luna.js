@@ -92,6 +92,11 @@ export default {
     ['function', 'discord', 'send', 'discord.send("Text")', 'Sendet eine Nachricht in den Kanal.', 'discord'],
     ['event', 'discord', 'message', 'discord.message:ConnectTo(function(msg) … end)', 'Ereignis: neue Nachricht. msg.content, msg.author, msg:reply("…").', 'discord'],
     ['property', 'discord', 'name', 'discord.name = "MeinBot"', 'Name des Bots.', 'discord'],
+    // Webhook
+    ['module', '', 'Webhook', 'import Webhook', 'Nachrichten an deine Webhooks senden (Discord oder eigene Server). Webhooks legst du im Dashboard an.', 'webhooks', 'import Webhook\nWebhook.send("Ankündigungen", "Neues Update ist da!")'],
+    ['function', 'Webhook', 'send', 'Webhook.send("Name", text oder tabelle)', 'Sendet an den Webhook mit diesem Namen. Andere Ziele bekommen JSON mit Signatur.', 'webhooks'],
+    ['function', 'Webhook', 'list', 'Webhook.list()', 'Namen aller deiner Webhooks als Liste.', 'webhooks'],
+    ['function', 'Webhook', 'exists', 'Webhook.exists("Name")', 'Prüft, ob es einen Webhook mit diesem Namen gibt.', 'webhooks'],
     // Http / Storage
     ['function', 'Http', 'get', 'Http.get(url)', 'Lädt eine Adresse und gibt den Text zurück.', 'bibliotheken'],
     ['function', 'Http', 'json', 'Http.json(url)', 'Lädt JSON und gibt eine Tabelle zurück.', 'bibliotheken'],
@@ -155,6 +160,7 @@ export const GUIDE = [
   { id: 'oberflaeche', title: '2D-Oberfläche (import Html)', text: 'create("Button") erstellt einen Button. Weitere Typen: Text, TextBox, Toggle, Frame, Image, Slider. Eigenschaften wie innerText, background, width, x, y setzt du direkt.', code: 'import Html\n\nlet button = create("Button")\nbutton.innerText = "Klick mich"\nbutton.click:ConnectTo(function()\n  button.innerText = "Test"\nend)' },
   { id: 'ereignisse', title: 'Ereignisse: :ConnectTo(function() … end)', text: 'Ereignisse wie click oder changed verbindest du mit :ConnectTo. Das end) schließt die Funktion und gleichzeitig die Klammer von ConnectTo.', code: 'import Html\n\nlet toggle = create("Toggle")\ntoggle.innerText = "Zähler"\nlet count = 0\ntoggle.changed:ConnectTo(function(an)\n  while toggle.checked and wait(1) do\n    count += 1\n    toggle.innerText = "Zähler: {count}"\n  end\nend)' },
   { id: 'discord', title: 'Discord-Bot (import discord)', text: 'Im Browser wird Discord als Test-Chat simuliert: Schreib in der Vorschau eine Nachricht, dein Bot antwortet.', code: 'import discord\ndiscord.name = "LunaBot"\n\ndiscord.message:ConnectTo(function(msg)\n  if msg.content == "!ping" then\n    msg:reply("pong")\n  end\nend)' },
+  { id: 'webhooks', title: 'Webhooks (import Webhook)', text: 'Webhooks legst du im Dashboard unter „Webhooks“ an – z. B. mit einer Discord-Webhook-URL. Das API-Secret ist mit Passwort, Face ID oder Fingerabdruck geschützt. Im Script sprichst du den Webhook über seinen Namen an.', code: 'import Webhook\n\nif Webhook.exists("Ankündigungen") then\n  Webhook.send("Ankündigungen", "Hallo aus Luna!")\nend' },
   { id: 'scripts', title: 'Mehrere Scripts', text: 'Beim Ausführen starten alle .luna-Dateien des Projekts gleichzeitig (main.luna zuerst). Funktionen ohne local sowie let/const sind in allen Scripts verfügbar; local bleibt in der Datei.', code: '-- helfer.luna\nfunction gruss(name)\n  return "Hallo " .. name\nend)\n\n-- main.luna\nprint(gruss("Ada"))' },
   { id: 'kommentare', title: 'Kommentare', text: '-- bis zum Zeilenende, -- mitten in der Zeile -- oder --[[ über mehrere Zeilen ]].', code: '-- ein Kommentar\nwhile wait(1) -- jede Sekunde -- do\n  print("tick")\nend\n--[[\n  langer Kommentar\n]]' },
 ];

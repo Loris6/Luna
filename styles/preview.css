@@ -1,0 +1,30 @@
+/* ---------- Geräte-Vorschau ---------- */
+.preview-body.luna { display: flex; }
+.dv { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.dv-toolbar { display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-bottom: 1px solid var(--border); background: #0f1014; flex-wrap: wrap; }
+.dv-quick { display: flex; gap: 2px; padding: 2px; border-radius: 9px; background: #17181e; }
+.dv-quick .icon-btn.on { background: #26324a; color: #cfe0ff; }
+.dv-select { height: 28px; border-radius: 7px; background: #17181e; border: 1px solid var(--border-2); color: var(--text); font-size: 13px; padding: 0 6px; max-width: 190px; }
+.dv-label { margin-left: auto; font: 12px var(--mono); color: var(--muted); white-space: nowrap; }
+.dv-stage { flex: 1; min-height: 0; overflow: hidden; display: block; background: #0a0a0d radial-gradient(#1b1c22 1px, transparent 1px) 0 0 / 18px 18px; position: relative; }
+.dv.fit .dv-stage { display: flex; background: #101116; }
+.dv.fit .dv-frame { position: static; flex: 1; align-self: stretch; padding: 0; border-radius: 0; background: none; box-shadow: none; transform: none !important; width: auto !important; height: auto !important; }
+.dv.fit .dv-screen { width: 100% !important; height: 100% !important; border-radius: 0; }
+.dv-frame { position: absolute; left: 50%; top: 50%; flex: none; transform-origin: center center; background: #1c1d22; border-radius: 20px; padding: 14px; box-shadow: 0 0 0 1px #2c2e37, 0 20px 60px #000a; }
+.dv-frame.phone { border-radius: 52px; padding: 13px; background: #121316; box-shadow: 0 0 0 2px #2e3037, 0 0 0 5px #17181c, 0 24px 70px #000b; }
+.dv-frame.tablet { border-radius: 34px; padding: 18px; background: #121316; box-shadow: 0 0 0 2px #2e3037, 0 24px 70px #000b; }
+.dv-frame.pc { border-radius: 12px; padding: 34px 14px 14px; background: #1b1c21; }
+.dv-frame.pc::before { content: ''; position: absolute; top: 13px; left: 16px; width: 54px; height: 10px; background: radial-gradient(circle at 5px 5px, #ff5f57 4.5px, transparent 5px), radial-gradient(circle at 23px 5px, #febc2e 4.5px, transparent 5px), radial-gradient(circle at 41px 5px, #28c840 4.5px, transparent 5px); }
+.dv-screen { position: relative; overflow: auto; background: #101116; border-radius: 6px; overscroll-behavior: none; }
+.dv-frame.phone .dv-screen { border-radius: 40px; }
+.dv-frame.tablet .dv-screen { border-radius: 18px; }
+.dv-notch { display: none; }
+.dv-frame.island .dv-notch { display: block; position: absolute; z-index: 3; top: 24px; left: 50%; width: 112px; height: 32px; margin-left: -56px; border-radius: 18px; background: #000; }
+.dv-frame.punch .dv-notch { display: block; position: absolute; z-index: 3; top: 24px; left: 50%; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: #000; }
+.dv-frame.landscape.island .dv-notch { top: 50%; left: 24px; width: 32px; height: 112px; margin: -56px 0 0; }
+.dv-frame.landscape.punch .dv-notch { top: 50%; left: 24px; margin: -7px 0 0; }
+.dv-frame.phone .luna-screen, .dv-frame.phone .luna-stage-host { padding-top: 34px; }
+.dv-frame.phone.landscape .luna-screen, .dv-frame.phone.landscape .luna-stage-host { padding-top: 0; padding-left: 40px; }
+.luna-screen { min-height: 100%; display: flex; flex-direction: column; }
+.luna-screen > .panel-empty { flex: 1; }
+.luna-stage-host { flex: 1; display: block; min-height: 100%; }

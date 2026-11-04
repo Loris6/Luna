@@ -8,9 +8,12 @@ import { allTabs, activeTab, openFile } from '../editor/editor.js';
 import { toast } from './dialog.js';
 import { ENABLED_LANGUAGES } from '../config.js';
 import { isLunaPath } from '../luna/project.js';
+import { devicePreview } from './preview.js';
+import { listWebhooks, sendWebhook } from '../core/webhooks.js';
 
 let lunaRt = null;
 let lunaStatus = '';
+let lunaPreview = null;
 
 let bottom, right, bottomTab = 'problems', consoleLines = [], preview = null, runner;
 const els = {};
@@ -222,18 +225,23 @@ async function runLunaFiles(p, sources) {
   els.rtitle.textContent = 'Luna';
   els.ext.hidden = true;
   const host = h('div', { class: 'luna-stage-host' });
+  const screenContent = h('div', { class: 'luna-screen' }, h('div', { class: 'panel-empty' }, frag(icon.play), h('div', {}, 'Luna läuft. Buttons & Co. erscheinen hier, sobald ein Script „import Html“ benutzt.')));
+  if (!lunaPreview) lunaPreview = devicePreview(screenContent, { device: app.settings.previewDevice || 'fit', onChange: (id) => app.set('previewDevice', id) });
+  else lunaPreview.screen.replaceChildren(screenContent);
   els.rbody.classList.add('luna');
-  els.rbody.replaceChildren(h('div', { class: 'panel-empty' }, frag(icon.play), h('div', {}, 'Luna läuft. Buttons & Co. erscheinen hier, sobald ein Script „import Html“ benutzt.')));
+  els.rbody.replaceChildren(lunaPreview.el);
   consoleLines.push({ level: 'info', text: `▶ ${p ? p.name + ': ' : ''}${sources.map((x) => x.path).join(', ')}`, time: new Date().toLocaleTimeString('de-DE') });
   bottomTab = 'console';
   app.set('bottomOpen', true);
   renderBottom();
+  const webhooks = await listWebhooks().catch(() => []);
   const rt = new LunaRuntime({
     out: (level, text, loc) => log(level, text, loc && p ? { ...loc, projectId: p.id } : null),
     stageHost: host,
     projectId: p?.id || 'beispiel',
+    webhooks: { list: webhooks, send: sendWebhook },
     onStatus: (st) => { if (rt === lunaRt) setRunStatus(st); },
-    onStage: () => { els.rbody.replaceChildren(host); app.set('rightOpen', true); },
+    onStage: () => { screenContent.replaceChildren(host); app.set('rightOpen', true); app.emit('preview-opened'); },
   });
   lunaRt = rt;
   await rt.run(sources);
@@ -292,7 +300,12 @@ async function openPreviewWindow() {
 }
 
 function renderPreviewEmpty() {
-  els.rbody.replaceChildren(h('div', { class: 'panel-empty' }, frag(icon.eye), h('div', {}, 'Öffne eine HTML- oder Markdown-Datei und drücke ▶.')));
+  const screenContent = h('div', { class: 'luna-screen' }, h('div', { class: 'panel-empty' }, frag(icon.play), h('div', {}, 'Drücke ▶, um deine Luna-Scripts zu starten – Buttons & Co. erscheinen hier im gewählten Gerät.')));
+  lunaPreview = devicePreview(screenContent, { device: app.settings.previewDevice || 'fit', onChange: (id) => app.set('previewDevice', id) });
+  els.rbody.classList.add('luna');
+  els.ext.hidden = true;
+  els.rtitle.textContent = 'Vorschau';
+  els.rbody.replaceChildren(lunaPreview.el);
 }
 
 function initResizers() {
